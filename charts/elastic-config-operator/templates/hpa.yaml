@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "searchruler.fullname" . }}
+  name: {{ include "elastic-config-operator.fullname" . }}
   labels:
-    {{- include "searchruler.labels" . | nindent 4 }}
+    {{- include "elastic-config-operator.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "searchruler.fullname" . }}
+    name: {{ include "elastic-config-operator.fullname" . }}
   minReplicas: {{ .Values.controller.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.controller.autoscaling.maxReplicas }}
   metrics:

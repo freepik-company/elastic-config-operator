@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "searchruler.fullname" . }}
+  name: {{ include "elastic-config-operator.fullname" . }}
   labels:
-    {{- include "searchruler.labels" . | nindent 4 }}
+    {{- include "elastic-config-operator.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.controller.autoscaling.enabled }}
   replicas: {{ .Values.controller.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "searchruler.selectorLabels" . | nindent 6 }}
+      {{- include "elastic-config-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.controller.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "searchruler.selectorLabels" . | nindent 8 }}
+        {{- include "elastic-config-operator.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.controller.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "searchruler.serviceAccountName" . }}
+      serviceAccountName: {{ include "elastic-config-operator.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.controller.podSecurityContext | nindent 8 }}
       containers:
@@ -35,31 +35,12 @@ spec:
           {{- end }}
           - --health-probe-bind-address=:8081
           - --leader-elect
-          {{- if .Values.controller.webserver.enabled }}
-          - --webserver-address=127.0.0.1:8082
-          {{- end }}
-          {{- if .Values.controller.customMetrics.enabled }}
-          - --rules-metrics-bind-address={{ .Values.controller.customMetrics.listenAddress }}
-          - --rules-metrics-refresh-rate={{ .Values.controller.customMetrics.refreshRate }}
-          {{- end }}
-          {{- if or .Values.controller.metrics.enabled .Values.controller.webserver.enabled }}
           ports:
             {{- if .Values.controller.metrics.enabled }}
             - containerPort: 8080
               name: metrics
               protocol: TCP
             {{- end }}
-            {{- if .Values.controller.webserver.enabled }}
-            - containerPort: 8082
-              name: webserver
-              protocol: TCP
-            {{- end }}
-            {{- if .Values.controller.customMetrics.enabled }}
-            - containerPort: 9090
-              name: custom-metrics
-              protocol: TCP
-            {{- end }}
-          {{- end }}
           command:
             - /manager
           image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag | default (printf "v%s" .Chart.AppVersion) }}"

@@ -1,9 +1,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "searchruler.fullname" . }}-leader-election
+  name: {{ include "elastic-config-operator.fullname" . }}-leader-election
   labels:
-    {{- include "searchruler.labels" . | nindent 4 }}
+    {{- include "elastic-config-operator.labels" . | nindent 4 }}
   namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups:

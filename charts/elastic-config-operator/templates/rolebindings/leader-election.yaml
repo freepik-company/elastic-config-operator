@@ -1,14 +1,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "searchruler.fullname" . }}-leader-election
+  name: {{ include "elastic-config-operator.fullname" . }}-leader-election
   labels:
-    {{- include "searchruler.labels" . | nindent 4 }}
+    {{- include "elastic-config-operator.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "searchruler.fullname" . }}-leader-election
+  name: {{ include "elastic-config-operator.fullname" . }}-leader-election
 subjects:
   - kind: ServiceAccount
-    name: {{ include "searchruler.serviceAccountName" . }}
+    name: {{ include "elastic-config-operator.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
