@@ -41,4 +41,12 @@ resources:
   kind: SnapshotLifecyclePolicy
   path: eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: eck-config-operator.freepik.com
+  kind: ClusterSettings
+  path: eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

@@ -4,4 +4,5 @@ resources:
 - v1alpha1_indextemplate.yaml
 - v1alpha1_snapshotrepository.yaml
 - v1alpha1_snapshotlifecyclepolicy.yaml
+- v1alpha1_clustersettings.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

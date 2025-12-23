@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	eckconfigoperatorfreepikcomv1alpha1 "eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1"
+	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/clustersettings"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/indexlifecyclepolicy"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/indextemplate"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/snapshotlifecyclepolicy"
@@ -226,6 +227,14 @@ func main() {
 		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SnapshotLifecyclePolicy")
+		os.Exit(1)
+	}
+	if err := (&clustersettings.ClusterSettingsReconciler{
+		Client:                       mgr.GetClient(),
+		Scheme:                       mgr.GetScheme(),
+		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterSettings")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

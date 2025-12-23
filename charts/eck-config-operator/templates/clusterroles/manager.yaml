@@ -26,6 +26,7 @@ rules:
 - apiGroups:
   - eck-config-operator.freepik.com
   resources:
+  - clustersettings
   - indexlifecyclepolicies
   - indextemplates
   - snapshotlifecyclepolicies
@@ -41,6 +42,7 @@ rules:
 - apiGroups:
   - eck-config-operator.freepik.com
   resources:
+  - clustersettings/finalizers
   - indexlifecyclepolicies/finalizers
   - indextemplates/finalizers
   - snapshotlifecyclepolicies/finalizers
@@ -50,6 +52,7 @@ rules:
 - apiGroups:
   - eck-config-operator.freepik.com
   resources:
+  - clustersettings/status
   - indexlifecyclepolicies/status
   - indextemplates/status
   - snapshotlifecyclepolicies/status

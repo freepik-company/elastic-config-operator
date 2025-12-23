@@ -7,6 +7,7 @@ const (
 	IndexTemplateResourceType           = "IndexTemplate"
 	SnapshotRepositoryResourceType      = "SnapshotRepository"
 	SnapshotLifecyclePolicyResourceType = "SnapshotLifecyclePolicy"
+	ClusterSettingsResourceType         = "ClusterSettings"
 
 	// Sync interval to check if the resources are up to date
 	DefaultSyncInterval = "10s"

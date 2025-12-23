@@ -1,6 +1,6 @@
 # ECK Config Operator
 
-A Kubernetes operator to manage Elasticsearch configuration (ILM policies, Index Templates, Snapshot Lifecycle Policies, and Snapshot Repositories) as Kubernetes Custom Resources.
+A Kubernetes operator to manage Elasticsearch configuration (ILM policies, Index Templates, Snapshot Lifecycle Policies, Snapshot Repositories, and Cluster Settings) as Kubernetes Custom Resources.
 
 ## Overview
 
@@ -21,6 +21,7 @@ The ECK Config Operator simplifies the management of Elasticsearch configuration
 
 | Custom Resource | Elasticsearch API |
 |----------------|-------------------|
+| `ClusterSettings` | Cluster Settings |
 | `IndexLifecyclePolicy` | Index Lifecycle Management (ILM) |
 | `IndexTemplate` | Index Templates |
 | `SnapshotLifecyclePolicy` | Snapshot Lifecycle Management (SLM) |
@@ -249,6 +250,30 @@ spec:
         expire_after: "30d"
         min_count: 5
         max_count: 50
+```
+
+### Cluster Settings
+
+```yaml
+apiVersion: eck-config-operator.freepik.com/v1alpha1
+kind: ClusterSettings
+metadata:
+  name: my-cluster-settings
+spec:
+  resourceSelector:
+    name: elasticsearch
+  resources:
+    # Persistent settings survive cluster restarts
+    persistent:
+      cluster.routing.allocation.cluster_concurrent_rebalance: 2
+      cluster.routing.allocation.enable: "all"
+      cluster.routing.allocation.node_concurrent_recoveries: 2
+      cluster.blocks.read_only: false
+      indices.lifecycle.poll_interval: "10m"
+    # Transient settings don't survive cluster restarts (useful for maintenance)
+    transient:
+      # Temporarily disable shard allocation during maintenance
+      cluster.routing.allocation.enable: "none"
 ```
 
 ## Status Fields
