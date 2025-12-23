@@ -1,0 +1,7 @@
+## Append samples of your project ##
+resources:
+- v1alpha1_indexlifecyclepolicy.yaml
+- v1alpha1_indextemplate.yaml
+- v1alpha1_snapshotrepository.yaml
+- v1alpha1_snapshotlifecyclepolicy.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

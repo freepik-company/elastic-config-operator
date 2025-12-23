@@ -1,0 +1,61 @@
+apiVersion: eck-config-operator.freepik.com/v1alpha1
+kind: IndexTemplate
+metadata:
+  labels:
+    app.kubernetes.io/name: eck-config-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: indextemplate-sample
+spec:
+  # SyncInterval defines how often the operator will reconcile this resource (default: 10s)
+  # Examples: "30s", "5m", "1h"
+  # syncInterval: "30s"
+
+  # For ECK cluster, you can use just the name of the cluster (namespace too if is different from the resource) and the
+  # operator will automatically get the endpoint, username, password and ca certificate from the ECK cluster.
+  resourceSelector:
+    name: elasticsearch
+    # namespace: default
+    endpoint: https://localhost:9200
+    username: elastic
+    passwordSecretRef:
+      name: elasticsearch-es-elastic-user
+      namespace: default
+      key: elastic
+    # If not defined, the operator will skip TLS verification if the endpoint is configured manually
+    # caCertSecretRef:
+    #   name: elasticsearch-es-http-certs-public
+    #   namespace: default
+    #   key: tls.crt
+  resources:
+    logs-app-template:
+      index_patterns:
+        - "logs-app-*"
+      template:
+        settings:
+          number_of_shards: 2
+          number_of_replicas: 1
+          index.lifecycle.name: "7d"
+          index.lifecycle.rollover_alias: "logs-app"
+          refresh_interval: "5s"
+        mappings:
+          properties:
+            "@timestamp":
+              type: "date"
+            level:
+              type: "keyword"
+            message:
+              type: "text"
+              fields:
+                keyword:
+                  type: "keyword"
+                  ignore_above: 256
+            service:
+              type: "keyword"
+            host:
+              type: "keyword"
+            trace_id:
+              type: "keyword"
+      priority: 101
+      composed_of: []
+      _meta:
+        description: "Template for application logs"
