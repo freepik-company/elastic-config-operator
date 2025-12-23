@@ -5,4 +5,5 @@ resources:
 - v1alpha1_snapshotrepository.yaml
 - v1alpha1_snapshotlifecyclepolicy.yaml
 - v1alpha1_clustersettings.yaml
+- v1alpha1_indexstatemanagement.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

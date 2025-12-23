@@ -61,10 +61,11 @@ func (r *ClusterSettingsReconciler) SetSyncing(ctx context.Context, resource *v1
 }
 
 // SetReady updates the status to Ready phase with applied resources
-func (r *ClusterSettingsReconciler) SetReady(ctx context.Context, resource *v1alpha1.ClusterSettings, appliedResources []string) error {
+func (r *ClusterSettingsReconciler) SetReady(ctx context.Context, resource *v1alpha1.ClusterSettings, targetCluster string, appliedResources []string) error {
 	now := metav1.Now()
 	resource.Status.Phase = controller.PhaseReady
 	resource.Status.Message = fmt.Sprintf("Successfully synced %d cluster settings", len(appliedResources))
+	resource.Status.TargetCluster = targetCluster
 	resource.Status.AppliedResources = appliedResources
 	resource.Status.LastSyncTime = &now
 	return r.Status().Update(ctx, resource)

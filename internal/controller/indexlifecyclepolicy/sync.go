@@ -83,7 +83,15 @@ func (r *IndexLifecyclePolicyReconciler) Sync(ctx context.Context, eventType wat
 		return err
 	}
 
-	logger.Info(fmt.Sprintf("Elasticsearch connection established for cluster %s", clusterKey))
+	logger.Info(fmt.Sprintf("Elasticsearch connection established for cluster %s (type: %s, version: %s)", clusterKey, esConnection.ClusterType, esConnection.Version))
+
+	// Validate cluster type - ILM is only available in Elasticsearch
+	if esConnection.ClusterType == "opensearch" {
+		err := fmt.Errorf("ILM (Index Lifecycle Management) is not available in OpenSearch. OpenSearch uses ISM (Index State Management) instead. Please use the IndexStateManagement CRD for OpenSearch clusters")
+		logger.Error(err, "Incompatible cluster type for IndexLifecyclePolicy")
+		r.SetError(ctx, resource, err)
+		return err
+	}
 
 	// Step 2: Get the list of policies currently applied (from Status)
 	appliedPolicies := make(map[string]bool)
@@ -136,7 +144,8 @@ func (r *IndexLifecyclePolicyReconciler) Sync(ctx context.Context, eventType wat
 	}
 
 	// Step 6: Update the Status with the new list of applied policies
-	if err := r.SetReady(ctx, resource, newAppliedPolicies); err != nil {
+	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
+	if err := r.SetReady(ctx, resource, targetCluster, newAppliedPolicies); err != nil {
 		logger.Error(err, "Failed to update IndexLifecyclePolicy status")
 		return err
 	}

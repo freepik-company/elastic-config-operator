@@ -24,11 +24,13 @@ import (
 
 // ElasticsearchConnection holds the connection details and client for an Elasticsearch cluster
 type ElasticsearchConnection struct {
-	Endpoint string
-	Username string
-	Password string
-	CACert   string
-	Client   *elasticsearch.Client
+	Endpoint    string
+	Username    string
+	Password    string
+	CACert      string
+	Client      *elasticsearch.Client
+	ClusterType string // "elasticsearch" or "opensearch"
+	Version     string // cluster version (e.g., "8.11.0", "2.11.0")
 }
 
 // ElasticsearchConnectionsStore stores Elasticsearch connections by namespace_name

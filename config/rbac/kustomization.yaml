@@ -22,6 +22,9 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the eck-config-operator itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
+- indexstatemanagement_admin_role.yaml
+- indexstatemanagement_editor_role.yaml
+- indexstatemanagement_viewer_role.yaml
 - clustersettings_admin_role.yaml
 - clustersettings_editor_role.yaml
 - clustersettings_viewer_role.yaml

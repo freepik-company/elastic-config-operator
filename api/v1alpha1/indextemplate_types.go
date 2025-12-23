@@ -51,6 +51,11 @@ type IndexTemplateStatus struct {
 	// +optional
 	Message string `json:"message,omitempty"`
 
+	// TargetCluster is the namespace/name of the target Elasticsearch cluster
+	// Format: "namespace/name"
+	// +optional
+	TargetCluster string `json:"targetCluster,omitempty"`
+
 	// AppliedResources is a list of resource names that have been successfully applied to Elasticsearch
 	// +optional
 	AppliedResources []string `json:"appliedResources,omitempty"`
@@ -77,6 +82,7 @@ type IndexTemplateStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Cluster",type=string,JSONPath=`.status.targetCluster`
 // +kubebuilder:printcolumn:name="Message",type=string,JSONPath=`.status.message`,priority=1
 // +kubebuilder:printcolumn:name="Last Sync",type=date,JSONPath=`.status.lastSyncTime`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`

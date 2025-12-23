@@ -1,0 +1,74 @@
+apiVersion: eck-config-operator.freepik.com/v1alpha1
+kind: IndexStateManagement
+metadata:
+  labels:
+    app.kubernetes.io/name: eck-config-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: indexstatemanagement-sample
+spec:
+  # SyncInterval defines how often the operator will reconcile this resource (default: 10s)
+  # Examples: "30s", "5m", "1h"
+  syncInterval: "30s"
+  
+  # ResourceSelector targets an OpenSearch cluster
+  # For OpenSearch, you MUST specify clusterType: opensearch
+  resourceSelector:
+    name: opensearch  # Name of the OpenSearch cluster
+    # namespace: default
+    endpoint: https://localhost:9200
+    username: admin
+    clusterType: opensearch  # IMPORTANT: Must be "opensearch" for ISM
+    passwordSecretRef:
+      name: opensearch-admin-password
+      namespace: default
+      key: password
+    # If not defined, the operator will skip TLS verification
+    # caCertSecretRef:
+    #   name: opensearch-ca-cert
+    #   namespace: default
+    #   key: ca.crt
+  
+  # Resources contains the ISM policies to apply
+  # OpenSearch ISM (Index State Management) is the equivalent of Elasticsearch ILM
+  resources:
+    hot-warm-delete:
+      # ISM policy structure (different from Elasticsearch ILM!)
+      description: "Hot-warm-delete policy for logs"
+      default_state: "hot"
+      states:
+        - name: "hot"
+          actions:
+            - rollover:
+                min_index_age: "1d"
+                min_primary_shard_size: "50gb"
+          transitions:
+            - state_name: "warm"
+              conditions:
+                min_index_age: "7d"
+        - name: "warm"
+          actions:
+            - replica_count:
+                number_of_replicas: 1
+            - force_merge:
+                max_num_segments: 1
+          transitions:
+            - state_name: "delete"
+              conditions:
+                min_index_age: "30d"
+        - name: "delete"
+          actions:
+            - delete: {}
+    
+    delete-after-7d:
+      description: "Simple delete after 7 days"
+      default_state: "hot"
+      states:
+        - name: "hot"
+          actions: []
+          transitions:
+            - state_name: "delete"
+              conditions:
+                min_index_age: "7d"
+        - name: "delete"
+          actions:
+            - delete: {}

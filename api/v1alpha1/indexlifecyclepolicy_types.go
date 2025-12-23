@@ -66,6 +66,11 @@ type ResourceSelector struct {
 	// CACertSecretRef references a Secret containing the CA certificate
 	// +optional
 	CACertSecretRef *SecretKeySelector `json:"caCertSecretRef,omitempty"`
+	// ClusterType specifies the type of cluster: "elasticsearch" or "opensearch"
+	// If not specified, the operator will automatically detect the cluster type
+	// +optional
+	// +kubebuilder:validation:Enum=elasticsearch;opensearch
+	ClusterType string `json:"clusterType,omitempty"`
 }
 
 // IndexLifecyclePolicyStatus defines the observed state of IndexLifecyclePolicy.
@@ -84,6 +89,11 @@ type IndexLifecyclePolicyStatus struct {
 	// Message provides additional information about the current phase
 	// +optional
 	Message string `json:"message,omitempty"`
+
+	// TargetCluster is the namespace/name of the target Elasticsearch cluster
+	// Format: "namespace/name"
+	// +optional
+	TargetCluster string `json:"targetCluster,omitempty"`
 
 	// AppliedResources is a list of resource names that have been successfully applied to Elasticsearch
 	// +optional
@@ -111,6 +121,7 @@ type IndexLifecyclePolicyStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
+// +kubebuilder:printcolumn:name="Cluster",type=string,JSONPath=`.status.targetCluster`
 // +kubebuilder:printcolumn:name="Message",type=string,JSONPath=`.status.message`,priority=1
 // +kubebuilder:printcolumn:name="Last Sync",type=date,JSONPath=`.status.lastSyncTime`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`

@@ -7,6 +7,7 @@ resources:
 - bases/eck-config-operator.freepik.com_snapshotrepositories.yaml
 - bases/eck-config-operator.freepik.com_snapshotlifecyclepolicies.yaml
 - bases/eck-config-operator.freepik.com_clustersettings.yaml
+- bases/eck-config-operator.freepik.com_indexstatemanagements.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

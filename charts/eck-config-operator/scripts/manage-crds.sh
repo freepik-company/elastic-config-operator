@@ -9,6 +9,7 @@ CRDS_DIR="$(dirname "$SCRIPT_DIR")/crds"
 CRDS=(
   "clustersettings.eck-config-operator.freepik.com"
   "indexlifecyclepolicies.eck-config-operator.freepik.com"
+  "indexstatemanagements.eck-config-operator.freepik.com"
   "indextemplates.eck-config-operator.freepik.com"
   "snapshotlifecyclepolicies.eck-config-operator.freepik.com"
   "snapshotrepositories.eck-config-operator.freepik.com"

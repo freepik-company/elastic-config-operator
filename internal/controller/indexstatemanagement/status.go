@@ -1,5 +1,5 @@
 /*
-Copyright 2024.
+Copyright 2025.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package snapshotrepository
+package indexstatemanagement
 
 import (
 	"context"
@@ -23,49 +23,48 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	//
 	"eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/globals"
 )
 
-// UpdateConditionSuccess updates the status of the SearchRule resource with a success condition
-func (r *SnapshotRepositoryReconciler) UpdateConditionSuccess(SnapshotRepository *v1alpha1.SnapshotRepository) {
+// UpdateConditionSuccess updates the status of the IndexStateManagement resource with a success condition
+func (r *IndexStateManagementReconciler) UpdateConditionSuccess(indexStateManagement *v1alpha1.IndexStateManagement) {
 
 	// Create the new condition with the success status
 	condition := globals.NewCondition(globals.ConditionTypeResourceSynced, metav1.ConditionTrue,
 		globals.ConditionReasonTargetSynced, globals.ConditionReasonTargetSyncedMessage)
 
-	// Update the status of the SearchRule resource
-	globals.UpdateCondition(&SnapshotRepository.Status.Conditions, condition)
+	// Update the status of the IndexStateManagement resource
+	globals.UpdateCondition(&indexStateManagement.Status.Conditions, condition)
 }
 
-// UpdateConditionKubernetesApiCallFailure updates the status of the SearchRule resource with a failure condition
-func (r *SnapshotRepositoryReconciler) UpdateConditionKubernetesApiCallFailure(SnapshotRepository *v1alpha1.SnapshotRepository) {
+// UpdateConditionKubernetesApiCallFailure updates the status of the IndexStateManagement resource with a failure condition
+func (r *IndexStateManagementReconciler) UpdateConditionKubernetesApiCallFailure(indexStateManagement *v1alpha1.IndexStateManagement) {
 
 	// Create the new condition with the failure status
 	condition := globals.NewCondition(globals.ConditionTypeResourceSynced, metav1.ConditionTrue,
 		globals.ConditionReasonKubernetesApiCallErrorType, globals.ConditionReasonKubernetesApiCallErrorMessage)
 
-	// Update the status of the SearchRule resource
-	globals.UpdateCondition(&SnapshotRepository.Status.Conditions, condition)
+	// Update the status of the IndexStateManagement resource
+	globals.UpdateCondition(&indexStateManagement.Status.Conditions, condition)
 }
 
 // SetSyncing updates the status to Syncing phase
-func (r *SnapshotRepositoryReconciler) SetSyncing(ctx context.Context, resource *v1alpha1.SnapshotRepository) {
+func (r *IndexStateManagementReconciler) SetSyncing(ctx context.Context, resource *v1alpha1.IndexStateManagement) {
 	logger := log.FromContext(ctx)
 	resource.Status.Phase = controller.PhaseSyncing
-	resource.Status.Message = "Synchronizing with Elasticsearch"
+	resource.Status.Message = "Synchronizing with OpenSearch"
 	if err := r.Status().Update(ctx, resource); err != nil {
 		logger.Error(err, "Failed to update status to Syncing")
 	}
 }
 
 // SetReady updates the status to Ready phase with applied resources
-func (r *SnapshotRepositoryReconciler) SetReady(ctx context.Context, resource *v1alpha1.SnapshotRepository, targetCluster string, appliedResources []string) error {
+func (r *IndexStateManagementReconciler) SetReady(ctx context.Context, resource *v1alpha1.IndexStateManagement, targetCluster string, appliedResources []string) error {
 	now := metav1.Now()
 	resource.Status.Phase = controller.PhaseReady
-	resource.Status.Message = fmt.Sprintf("Successfully synced %d repositories", len(appliedResources))
+	resource.Status.Message = fmt.Sprintf("Successfully synced %d policies", len(appliedResources))
 	resource.Status.TargetCluster = targetCluster
 	resource.Status.AppliedResources = appliedResources
 	resource.Status.LastSyncTime = &now
@@ -73,7 +72,7 @@ func (r *SnapshotRepositoryReconciler) SetReady(ctx context.Context, resource *v
 }
 
 // SetError updates the status to Error phase with error message
-func (r *SnapshotRepositoryReconciler) SetError(ctx context.Context, resource *v1alpha1.SnapshotRepository, err error) {
+func (r *IndexStateManagementReconciler) SetError(ctx context.Context, resource *v1alpha1.IndexStateManagement, err error) {
 	resource.Status.Phase = controller.PhaseError
 	resource.Status.Message = err.Error()
 	_ = r.Status().Update(ctx, resource)

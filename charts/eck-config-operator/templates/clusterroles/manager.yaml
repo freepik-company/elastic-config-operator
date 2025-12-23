@@ -28,6 +28,7 @@ rules:
   resources:
   - clustersettings
   - indexlifecyclepolicies
+  - indexstatemanagements
   - indextemplates
   - snapshotlifecyclepolicies
   - snapshotrepositories
@@ -44,6 +45,7 @@ rules:
   resources:
   - clustersettings/finalizers
   - indexlifecyclepolicies/finalizers
+  - indexstatemanagements/finalizers
   - indextemplates/finalizers
   - snapshotlifecyclepolicies/finalizers
   - snapshotrepositories/finalizers
@@ -54,6 +56,7 @@ rules:
   resources:
   - clustersettings/status
   - indexlifecyclepolicies/status
+  - indexstatemanagements/status
   - indextemplates/status
   - snapshotlifecyclepolicies/status
   - snapshotrepositories/status

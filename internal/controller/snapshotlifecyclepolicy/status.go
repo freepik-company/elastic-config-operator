@@ -62,10 +62,11 @@ func (r *SnapshotLifecyclePolicyReconciler) SetSyncing(ctx context.Context, reso
 }
 
 // SetReady updates the status to Ready phase with applied resources
-func (r *SnapshotLifecyclePolicyReconciler) SetReady(ctx context.Context, resource *v1alpha1.SnapshotLifecyclePolicy, appliedResources []string) error {
+func (r *SnapshotLifecyclePolicyReconciler) SetReady(ctx context.Context, resource *v1alpha1.SnapshotLifecyclePolicy, targetCluster string, appliedResources []string) error {
 	now := metav1.Now()
 	resource.Status.Phase = controller.PhaseReady
 	resource.Status.Message = fmt.Sprintf("Successfully synced %d policies", len(appliedResources))
+	resource.Status.TargetCluster = targetCluster
 	resource.Status.AppliedResources = appliedResources
 	resource.Status.LastSyncTime = &now
 	return r.Status().Update(ctx, resource)

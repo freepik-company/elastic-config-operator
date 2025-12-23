@@ -136,7 +136,8 @@ func (r *SnapshotRepositoryReconciler) Sync(ctx context.Context, eventType watch
 	}
 
 	// Step 6: Update the Status with the new list of applied repositories
-	if err := r.SetReady(ctx, resource, newAppliedRepositories); err != nil {
+	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
+	if err := r.SetReady(ctx, resource, targetCluster, newAppliedRepositories); err != nil {
 		logger.Error(err, "Failed to update SnapshotRepository status")
 		return err
 	}

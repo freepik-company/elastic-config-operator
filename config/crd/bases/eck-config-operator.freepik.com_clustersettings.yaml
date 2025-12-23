@@ -19,6 +19,10 @@ spec:
       jsonPath: .status.phase
       name: Phase
       type: string
+    - description: Target cluster
+      jsonPath: .status.targetCluster
+      name: Cluster
+      type: string
     - description: Detailed status message
       jsonPath: .status.message
       name: Message
@@ -78,6 +82,14 @@ spec:
                     - key
                     - name
                     type: object
+                  clusterType:
+                    description: |-
+                      ClusterType specifies the type of cluster: "elasticsearch" or "opensearch"
+                      If not specified, the operator will automatically detect the cluster type
+                    enum:
+                    - elasticsearch
+                    - opensearch
+                    type: string
                   endpoint:
                     description: |-
                       Manual configuration (optional) - if provided, these values override ECK automatic discovery
@@ -217,6 +229,11 @@ spec:
                 description: |-
                   Phase indicates the current phase of the ClusterSettings.
                   It can be "Pending", "Syncing", "Ready", or "Error".
+                type: string
+              targetCluster:
+                description: |-
+                  TargetCluster is the namespace/name of the target Elasticsearch cluster
+                  Format: "namespace/name"
                 type: string
             type: object
         required:

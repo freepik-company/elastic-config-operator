@@ -62,10 +62,11 @@ func (r *IndexLifecyclePolicyReconciler) SetSyncing(ctx context.Context, resourc
 }
 
 // SetReady updates the status to Ready phase with applied resources
-func (r *IndexLifecyclePolicyReconciler) SetReady(ctx context.Context, resource *v1alpha1.IndexLifecyclePolicy, appliedResources []string) error {
+func (r *IndexLifecyclePolicyReconciler) SetReady(ctx context.Context, resource *v1alpha1.IndexLifecyclePolicy, targetCluster string, appliedResources []string) error {
 	now := metav1.Now()
 	resource.Status.Phase = controller.PhaseReady
 	resource.Status.Message = fmt.Sprintf("Successfully synced %d policies", len(appliedResources))
+	resource.Status.TargetCluster = targetCluster
 	resource.Status.AppliedResources = appliedResources
 	resource.Status.LastSyncTime = &now
 	return r.Status().Update(ctx, resource)

@@ -1,0 +1,27 @@
+# This rule is not used by the project eck-config-operator itself.
+# It is provided to allow the cluster admin to help manage permissions for users.
+#
+# Grants full permissions ('*') over eck-config-operator.freepik.com.
+# This role is intended for users authorized to modify roles and bindings within the cluster,
+# enabling them to delegate specific permissions to other users or groups as needed.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: eck-config-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: indexstatemanagement-admin-role
+rules:
+- apiGroups:
+  - eck-config-operator.freepik.com
+  resources:
+  - indexstatemanagements
+  verbs:
+  - '*'
+- apiGroups:
+  - eck-config-operator.freepik.com
+  resources:
+  - indexstatemanagements/status
+  verbs:
+  - get

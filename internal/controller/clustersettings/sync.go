@@ -190,7 +190,8 @@ func (r *ClusterSettingsReconciler) Sync(ctx context.Context, eventType watch.Ev
 	}
 
 	// Step 6: Update the Status with the new list of applied settings
-	if err := r.SetReady(ctx, resource, newAppliedSettings); err != nil {
+	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
+	if err := r.SetReady(ctx, resource, targetCluster, newAppliedSettings); err != nil {
 		logger.Error(err, "Failed to update ClusterSettings status")
 		return err
 	}

@@ -1,6 +1,6 @@
 # ECK Config Operator
 
-A Kubernetes operator to manage Elasticsearch configuration (ILM policies, Index Templates, Snapshot Lifecycle Policies, Snapshot Repositories, and Cluster Settings) as Kubernetes Custom Resources.
+A Kubernetes operator to manage Elasticsearch and OpenSearch configuration (ILM/ISM policies, Index Templates, Snapshot Lifecycle Policies, Snapshot Repositories, and Cluster Settings) as Kubernetes Custom Resources.
 
 ## Overview
 
@@ -19,13 +19,14 @@ The ECK Config Operator simplifies the management of Elasticsearch configuration
 
 ### Supported Resources
 
-| Custom Resource | Elasticsearch API |
-|----------------|-------------------|
-| `ClusterSettings` | Cluster Settings |
-| `IndexLifecyclePolicy` | Index Lifecycle Management (ILM) |
-| `IndexTemplate` | Index Templates |
-| `SnapshotLifecyclePolicy` | Snapshot Lifecycle Management (SLM) |
-| `SnapshotRepository` | Snapshot Repositories |
+| Custom Resource | Elasticsearch API | OpenSearch API | Notes |
+|----------------|-------------------|----------------|-------|
+| `ClusterSettings` | ✅ Cluster Settings | ✅ Cluster Settings | Fully compatible |
+| `IndexLifecyclePolicy` | ✅ Index Lifecycle Management (ILM) | ❌ Not supported | Elasticsearch only |
+| `IndexStateManagement` | ❌ Not supported | ✅ Index State Management (ISM) | OpenSearch only |
+| `IndexTemplate` | ✅ Index Templates | ✅ Index Templates | Fully compatible |
+| `SnapshotLifecyclePolicy` | ✅ Snapshot Lifecycle Management (SLM) | ✅ Snapshot Lifecycle Management (SLM) | Fully compatible |
+| `SnapshotRepository` | ✅ Snapshot Repositories | ✅ Snapshot Repositories | Fully compatible |
 
 ## Getting Started
 
@@ -274,6 +275,66 @@ spec:
     transient:
       # Temporarily disable shard allocation during maintenance
       cluster.routing.allocation.enable: "none"
+```
+
+### Index State Management (OpenSearch only)
+
+⚠️ **Note**: This resource is specifically for OpenSearch clusters. For Elasticsearch, use `IndexLifecyclePolicy` instead.
+
+```yaml
+apiVersion: eck-config-operator.freepik.com/v1alpha1
+kind: IndexStateManagement
+metadata:
+  name: my-ism-policies
+spec:
+  resourceSelector:
+    name: opensearch
+    clusterType: opensearch  # REQUIRED for OpenSearch
+  resources:
+    hot-warm-delete:
+      description: "Hot-warm-delete policy for logs"
+      default_state: "hot"
+      states:
+        - name: "hot"
+          actions:
+            - rollover:
+                min_index_age: "1d"
+                min_primary_shard_size: "50gb"
+          transitions:
+            - state_name: "warm"
+              conditions:
+                min_index_age: "7d"
+        - name: "warm"
+          actions:
+            - replica_count:
+                number_of_replicas: 1
+            - force_merge:
+                max_num_segments: 1
+          transitions:
+            - state_name: "delete"
+              conditions:
+                min_index_age: "30d"
+        - name: "delete"
+          actions:
+            - delete: {}
+```
+
+## Elasticsearch vs OpenSearch
+
+The operator automatically detects the cluster type (Elasticsearch or OpenSearch) and validates that you're using the correct CRD:
+
+- **Elasticsearch clusters**: Use `IndexLifecyclePolicy` for ILM (Index Lifecycle Management)
+- **OpenSearch clusters**: Use `IndexStateManagement` for ISM (Index State Management)
+
+All other resources (`ClusterSettings`, `IndexTemplate`, `SnapshotLifecyclePolicy`, `SnapshotRepository`) work with both Elasticsearch and OpenSearch.
+
+### Manual cluster type configuration
+
+```yaml
+spec:
+  resourceSelector:
+    name: my-cluster
+    clusterType: opensearch  # or "elasticsearch" - overrides auto-detection
 ```
 
 ## Status Fields

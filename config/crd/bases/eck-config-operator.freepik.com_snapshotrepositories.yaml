@@ -18,6 +18,9 @@ spec:
     - jsonPath: .status.phase
       name: Phase
       type: string
+    - jsonPath: .status.targetCluster
+      name: Cluster
+      type: string
     - jsonPath: .status.message
       name: Message
       priority: 1
@@ -76,6 +79,14 @@ spec:
                     - key
                     - name
                     type: object
+                  clusterType:
+                    description: |-
+                      ClusterType specifies the type of cluster: "elasticsearch" or "opensearch"
+                      If not specified, the operator will automatically detect the cluster type
+                    enum:
+                    - elasticsearch
+                    - opensearch
+                    type: string
                   endpoint:
                     description: |-
                       Manual configuration (optional) - if provided, these values override ECK automatic discovery
@@ -216,6 +227,11 @@ spec:
                 description: |-
                   Phase represents the current phase of the SnapshotRepository
                   Possible values: Pending, Syncing, Ready, Error
+                type: string
+              targetCluster:
+                description: |-
+                  TargetCluster is the namespace/name of the target Elasticsearch cluster
+                  Format: "namespace/name"
                 type: string
             type: object
         required:

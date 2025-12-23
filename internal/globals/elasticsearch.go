@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -152,29 +154,102 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 		return nil, fmt.Errorf("failed to create Elasticsearch client: %w", err)
 	}
 
-	// Verify connection
-	res, err := esClient.Info()
+	// Verify connection and detect cluster type
+	clusterType, version, err := detectClusterType(ctx, esClient, resourceSelector.ClusterType)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify Elasticsearch connection: %w", err)
-	}
-	defer res.Body.Close()
-
-	if res.IsError() {
-		return nil, fmt.Errorf("elasticsearch connection verification failed: %s", res.String())
+		return nil, fmt.Errorf("failed to detect cluster type: %w", err)
 	}
 
-	logger.Info(fmt.Sprintf("Elasticsearch connection verified for cluster %s", clusterKey))
+	logger.Info(fmt.Sprintf("Detected cluster type: %s, version: %s", clusterType, version))
 
 	// Store connection in pool
 	connection := &pools.ElasticsearchConnection{
-		Endpoint: endpoint,
-		Username: username,
-		Password: password,
-		CACert:   string(caCert),
-		Client:   esClient,
+		Endpoint:    endpoint,
+		Username:    username,
+		Password:    password,
+		CACert:      string(caCert),
+		Client:      esClient,
+		ClusterType: clusterType,
+		Version:     version,
 	}
 
 	elasticsearchConnectionsPool.Set(clusterKey, connection)
 
 	return connection, nil
+}
+
+// detectClusterType detects the type of cluster (Elasticsearch or OpenSearch) and its version
+// If clusterTypeOverride is provided, it will use that instead of auto-detection
+func detectClusterType(ctx context.Context, client *elasticsearch.Client, clusterTypeOverride string) (string, string, error) {
+	logger := log.FromContext(ctx)
+
+	// If cluster type is explicitly provided, use it
+	if clusterTypeOverride != "" {
+		logger.Info(fmt.Sprintf("Using manually configured cluster type: %s", clusterTypeOverride))
+		// Still need to get the version
+		res, err := client.Info(client.Info.WithContext(ctx))
+		if err != nil {
+			return "", "", fmt.Errorf("failed to get cluster info: %w", err)
+		}
+		defer res.Body.Close()
+
+		if res.IsError() {
+			return "", "", fmt.Errorf("cluster info request failed: %s", res.String())
+		}
+
+		var info struct {
+			Version struct {
+				Number string `json:"number"`
+			} `json:"version"`
+		}
+
+		bodyBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to read response body: %w", err)
+		}
+
+		if err := json.Unmarshal(bodyBytes, &info); err != nil {
+			return "", "", fmt.Errorf("failed to parse cluster info: %w", err)
+		}
+
+		return clusterTypeOverride, info.Version.Number, nil
+	}
+
+	// Auto-detect cluster type
+	res, err := client.Info(client.Info.WithContext(ctx))
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get cluster info: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		return "", "", fmt.Errorf("cluster info request failed: %s", res.String())
+	}
+
+	var info struct {
+		Version struct {
+			Distribution string `json:"distribution"` // OpenSearch includes this field
+			Number       string `json:"number"`
+		} `json:"version"`
+	}
+
+	bodyBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if err := json.Unmarshal(bodyBytes, &info); err != nil {
+		return "", "", fmt.Errorf("failed to parse cluster info: %w", err)
+	}
+
+	// OpenSearch explicitly includes "distribution": "opensearch"
+	// Elasticsearch may not include this field or has "elasticsearch"
+	clusterType := "elasticsearch"
+	if info.Version.Distribution == "opensearch" {
+		clusterType = "opensearch"
+	}
+
+	logger.Info(fmt.Sprintf("Auto-detected cluster type: %s (version: %s)", clusterType, info.Version.Number))
+
+	return clusterType, info.Version.Number, nil
 }

@@ -136,7 +136,8 @@ func (r *IndexTemplateReconciler) Sync(ctx context.Context, eventType watch.Even
 	}
 
 	// Step 6: Update the Status with the new list of applied templates
-	if err := r.SetReady(ctx, resource, newAppliedTemplates); err != nil {
+	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
+	if err := r.SetReady(ctx, resource, targetCluster, newAppliedTemplates); err != nil {
 		logger.Error(err, "Failed to update IndexTemplate status")
 		return err
 	}

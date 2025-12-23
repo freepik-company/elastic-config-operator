@@ -136,7 +136,8 @@ func (r *SnapshotLifecyclePolicyReconciler) Sync(ctx context.Context, eventType 
 	}
 
 	// Step 6: Update the Status with the new list of applied policies
-	if err := r.SetReady(ctx, resource, newAppliedPolicies); err != nil {
+	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
+	if err := r.SetReady(ctx, resource, targetCluster, newAppliedPolicies); err != nil {
 		logger.Error(err, "Failed to update SnapshotLifecyclePolicy status")
 		return err
 	}

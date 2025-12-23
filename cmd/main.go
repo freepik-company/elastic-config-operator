@@ -38,6 +38,7 @@ import (
 	eckconfigoperatorfreepikcomv1alpha1 "eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/clustersettings"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/indexlifecyclepolicy"
+	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/indexstatemanagement"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/indextemplate"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/snapshotlifecyclepolicy"
 	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/snapshotrepository"
@@ -235,6 +236,14 @@ func main() {
 		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterSettings")
+		os.Exit(1)
+	}
+	if err := (&indexstatemanagement.IndexStateManagementReconciler{
+		Client:                       mgr.GetClient(),
+		Scheme:                       mgr.GetScheme(),
+		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "IndexStateManagement")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
