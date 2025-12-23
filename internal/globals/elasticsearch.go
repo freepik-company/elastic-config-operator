@@ -19,7 +19,7 @@ import (
 )
 
 // getOrCreateElasticsearchConnection retrieves or creates a connection to an Elasticsearch cluster
-func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, resourceSelector *v1alpha1.ResourceSelector, elasticsearchConnectionsPool *pools.ElasticsearchConnectionsStore) (*pools.ElasticsearchConnection, error) {
+func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, resourceSelector *v1alpha1.ResourceSelector, crNamespace string, elasticsearchConnectionsPool *pools.ElasticsearchConnectionsStore) (*pools.ElasticsearchConnection, error) {
 	logger := log.FromContext(ctx)
 
 	// Check if connection already exists in pool
@@ -29,6 +29,13 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 	}
 
 	logger.Info(fmt.Sprintf("Creating new Elasticsearch connection for cluster %s", clusterKey))
+
+	// Use resourceSelector namespace if provided, otherwise use CR namespace
+	targetNamespace := resourceSelector.Namespace
+	if targetNamespace == "" {
+		targetNamespace = crNamespace
+		logger.Info(fmt.Sprintf("ResourceSelector namespace not specified, using CR namespace: %s", targetNamespace))
+	}
 
 	var endpoint, username, password string
 	var caCert []byte
@@ -51,10 +58,10 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 		if resourceSelector.PasswordSecretRef == nil {
 			return nil, fmt.Errorf("passwordSecretRef is required when using manual configuration")
 		}
-		// Use specified namespace or default to resource's namespace
+		// Use specified namespace or default to target namespace
 		passwordSecretNamespace := resourceSelector.PasswordSecretRef.Namespace
 		if passwordSecretNamespace == "" {
-			passwordSecretNamespace = resourceSelector.Namespace
+			passwordSecretNamespace = targetNamespace
 		}
 		passwordSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(passwordSecretNamespace).Get(ctx, resourceSelector.PasswordSecretRef.Name, metav1.GetOptions{})
 		if err != nil {
@@ -67,10 +74,10 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 
 		// Get CA certificate from secret (optional)
 		if resourceSelector.CACertSecretRef != nil {
-			// Use specified namespace or default to resource's namespace
+			// Use specified namespace or default to target namespace
 			caCertSecretNamespace := resourceSelector.CACertSecretRef.Namespace
 			if caCertSecretNamespace == "" {
-				caCertSecretNamespace = resourceSelector.Namespace
+				caCertSecretNamespace = targetNamespace
 			}
 			caCertSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(caCertSecretNamespace).Get(ctx, resourceSelector.CACertSecretRef.Name, metav1.GetOptions{})
 			if err != nil {
@@ -89,20 +96,20 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 			Group:    "elasticsearch.k8s.elastic.co",
 			Version:  "v1",
 			Resource: "elasticsearches",
-		}).Namespace(resourceSelector.Namespace).Get(ctx, resourceSelector.Name, metav1.GetOptions{})
+		}).Namespace(targetNamespace).Get(ctx, resourceSelector.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ECK cluster: %w", err)
 		}
 
 		// Get the service name (ECK creates a service with name {elasticsearch-name}-es-http)
 		serviceName := fmt.Sprintf("%s-es-http", resourceSelector.Name)
-		endpoint = fmt.Sprintf("https://%s.%s.svc.cluster.local:9200", serviceName, resourceSelector.Namespace)
+		endpoint = fmt.Sprintf("https://%s.%s.svc:9200", serviceName, targetNamespace)
 
 		logger.Info(fmt.Sprintf("ECK Elasticsearch endpoint: %s", endpoint))
 
 		// Get credentials from the secret created by ECK (secret name: {elasticsearch-name}-es-elastic-user)
 		secretName := fmt.Sprintf("%s-es-elastic-user", resourceSelector.Name)
-		secret, err := Application.KubeRawCoreClient.CoreV1().Secrets(resourceSelector.Namespace).Get(ctx, secretName, metav1.GetOptions{})
+		secret, err := Application.KubeRawCoreClient.CoreV1().Secrets(targetNamespace).Get(ctx, secretName, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to get Elasticsearch credentials secret: %w", err)
 		}
@@ -112,7 +119,7 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 
 		// Get the CA certificate
 		caCertSecretName := fmt.Sprintf("%s-es-http-certs-public", resourceSelector.Name)
-		caCertSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(resourceSelector.Namespace).Get(ctx, caCertSecretName, metav1.GetOptions{})
+		caCertSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(targetNamespace).Get(ctx, caCertSecretName, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to get CA certificate secret: %w", err)
 		}

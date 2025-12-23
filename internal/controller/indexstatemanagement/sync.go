@@ -49,7 +49,7 @@ func (r *IndexStateManagementReconciler) Sync(ctx context.Context, eventType wat
 		logger.Info(fmt.Sprintf("Deleting IndexStateManagement %s/%s", resource.Namespace, resource.Name))
 
 		// Get OpenSearch connection to delete the policies
-		esConnection, err := globals.GetOrCreateElasticsearchConnection(ctx, clusterKey, &resource.Spec.ResourceSelector, r.ElasticsearchConnectionsPool)
+		esConnection, err := globals.GetOrCreateElasticsearchConnection(ctx, clusterKey, &resource.Spec.ResourceSelector, resource.Namespace, r.ElasticsearchConnectionsPool)
 		if err != nil {
 			logger.Error(err, "Failed to get OpenSearch connection for deletion")
 			return err
@@ -74,7 +74,7 @@ func (r *IndexStateManagementReconciler) Sync(ctx context.Context, eventType wat
 	r.SetSyncing(ctx, resource)
 
 	// Step 1: Get or create OpenSearch connection
-	esConnection, err := globals.GetOrCreateElasticsearchConnection(ctx, clusterKey, &resource.Spec.ResourceSelector, r.ElasticsearchConnectionsPool)
+	esConnection, err := globals.GetOrCreateElasticsearchConnection(ctx, clusterKey, &resource.Spec.ResourceSelector, resource.Namespace, r.ElasticsearchConnectionsPool)
 	if err != nil {
 		logger.Error(err, "Failed to get or create OpenSearch connection")
 		r.SetError(ctx, resource, fmt.Errorf("failed to connect to OpenSearch: %w", err))

@@ -49,7 +49,7 @@ func (r *ClusterSettingsReconciler) Sync(ctx context.Context, eventType watch.Ev
 		logger.Info(fmt.Sprintf("Deleting ClusterSettings %s/%s", resource.Namespace, resource.Name))
 
 		// Get Elasticsearch connection to delete the settings
-		esConnection, err := globals.GetOrCreateElasticsearchConnection(ctx, clusterKey, &resource.Spec.ResourceSelector, r.ElasticsearchConnectionsPool)
+		esConnection, err := globals.GetOrCreateElasticsearchConnection(ctx, clusterKey, &resource.Spec.ResourceSelector, resource.Namespace, r.ElasticsearchConnectionsPool)
 		if err != nil {
 			logger.Error(err, "Failed to get Elasticsearch connection for deletion")
 			return err
@@ -93,7 +93,7 @@ func (r *ClusterSettingsReconciler) Sync(ctx context.Context, eventType watch.Ev
 	r.SetSyncing(ctx, resource)
 
 	// Step 1: Get or create Elasticsearch connection
-	esConnection, err := globals.GetOrCreateElasticsearchConnection(ctx, clusterKey, &resource.Spec.ResourceSelector, r.ElasticsearchConnectionsPool)
+	esConnection, err := globals.GetOrCreateElasticsearchConnection(ctx, clusterKey, &resource.Spec.ResourceSelector, resource.Namespace, r.ElasticsearchConnectionsPool)
 	if err != nil {
 		logger.Error(err, "Failed to get or create Elasticsearch connection")
 		r.SetError(ctx, resource, fmt.Errorf("failed to connect to Elasticsearch: %w", err))
