@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	"eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/pools"
+	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/pools"
 	"github.com/elastic/go-elasticsearch/v8"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"

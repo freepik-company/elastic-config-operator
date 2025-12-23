@@ -1,4 +1,4 @@
-module eck-config-operator.freepik.com/eck-config-operator
+module elastic-config-operator.freepik.com/elastic-config-operator
 
 go 1.24.6
 

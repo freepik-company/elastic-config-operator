@@ -1,17 +1,17 @@
-# ECK Config Operator Helm Chart
+# Elastic Config Operator Helm Chart
 
-A Helm chart for deploying the ECK Config Operator to Kubernetes.
+A Helm chart for deploying the Elastic Config Operator to Kubernetes.
 
 ## TL;DR
 
 ```bash
 helm repo add freepik https://charts.freepik.com
-helm install eck-config-operator freepik/eck-config-operator
+helm install elastic-config-operator freepik/elastic-config-operator
 ```
 
 ## Introduction
 
-This chart bootstraps an [ECK Config Operator](https://github.com/freepik-company/eck-config-operator) deployment on a Kubernetes cluster using the Helm package manager.
+This chart bootstraps an [Elastic Config Operator](https://github.com/freepik-company/elastic-config-operator) deployment on a Kubernetes cluster using the Helm package manager.
 
 ## Prerequisites
 
@@ -24,28 +24,28 @@ This chart bootstraps an [ECK Config Operator](https://github.com/freepik-compan
 ### Standard Installation
 
 ```bash
-helm install my-release freepik/eck-config-operator
+helm install my-release freepik/elastic-config-operator
 ```
 
-This command deploys the ECK Config Operator with default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
+This command deploys the Elastic Config Operator with default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
 
 ### Installation Without CRDs
 
 If CRDs are already installed or you want to manage them separately:
 
 ```bash
-helm install my-release freepik/eck-config-operator --skip-crds
+helm install my-release freepik/elastic-config-operator --skip-crds
 ```
 
 ### Upgrading
 
 ```bash
 # Standard upgrade (CRDs are NOT updated by default in Helm)
-helm upgrade my-release freepik/eck-config-operator
+helm upgrade my-release freepik/elastic-config-operator
 
 # To update CRDs manually before upgrading:
-kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-operator/main/config/crd/bases/
-helm upgrade my-release freepik/eck-config-operator
+kubectl apply -f https://raw.githubusercontent.com/freepik-company/elastic-config-operator/main/config/crd/bases/
+helm upgrade my-release freepik/elastic-config-operator
 ```
 
 **Note**: Helm does not upgrade CRDs automatically. You must update them manually if the CRD definitions change.
@@ -63,10 +63,10 @@ This command removes all the Kubernetes components associated with the chart and
 To also remove CRDs (⚠️ this will delete all your custom resources):
 
 ```bash
-kubectl delete crd indexlifecyclepolicies.eck-config-operator.freepik.com
-kubectl delete crd indextemplates.eck-config-operator.freepik.com
-kubectl delete crd snapshotlifecyclepolicies.eck-config-operator.freepik.com
-kubectl delete crd snapshotrepositories.eck-config-operator.freepik.com
+kubectl delete crd indexlifecyclepolicies.elastic-config-operator.freepik.com
+kubectl delete crd indextemplates.elastic-config-operator.freepik.com
+kubectl delete crd snapshotlifecyclepolicies.elastic-config-operator.freepik.com
+kubectl delete crd snapshotrepositories.elastic-config-operator.freepik.com
 ```
 
 ## Parameters
@@ -90,7 +90,7 @@ kubectl delete crd snapshotrepositories.eck-config-operator.freepik.com
 | Name | Description | Value |
 |------|-------------|-------|
 | `controller.replicaCount` | Number of replicas | `1` |
-| `controller.image.repository` | Image repository | `ghcr.io/freepik-company/eck-config-operator` |
+| `controller.image.repository` | Image repository | `ghcr.io/freepik-company/elastic-config-operator` |
 | `controller.image.pullPolicy` | Image pull policy | `IfNotPresent` |
 | `controller.image.tag` | Image tag (defaults to chart appVersion) | `""` |
 | `controller.imagePullSecrets` | Image pull secrets | `[]` |
@@ -101,7 +101,7 @@ kubectl delete crd snapshotrepositories.eck-config-operator.freepik.com
 |------|-------------|-------|
 | `controller.serviceAccount.create` | Create service account | `true` |
 | `controller.serviceAccount.annotations` | Service account annotations | `{}` |
-| `controller.serviceAccount.name` | Service account name | `eck-config-operator-controller-manager` |
+| `controller.serviceAccount.name` | Service account name | `elastic-config-operator-controller-manager` |
 
 ### RBAC parameters
 
@@ -203,7 +203,7 @@ The operator manages the following Custom Resource Definitions:
 - **SnapshotLifecyclePolicy** - Elasticsearch SLM policies
 - **SnapshotRepository** - Elasticsearch snapshot repositories
 
-See the [main README](https://github.com/freepik-company/eck-config-operator) for usage examples.
+See the [main README](https://github.com/freepik-company/elastic-config-operator) for usage examples.
 
 ## CRD Management
 
@@ -220,14 +220,14 @@ If you encounter "CRD already exists" errors:
 
 ```bash
 # Option 1: Skip CRDs during installation
-helm install my-release freepik/eck-config-operator --skip-crds
+helm install my-release freepik/elastic-config-operator --skip-crds
 
 # Option 2: Upgrade existing installation
-helm upgrade my-release freepik/eck-config-operator
+helm upgrade my-release freepik/elastic-config-operator
 
 # Option 3: Delete and reinstall (⚠️ will delete all custom resources)
-kubectl delete crd indexlifecyclepolicies.eck-config-operator.freepik.com
-helm install my-release freepik/eck-config-operator
+kubectl delete crd indexlifecyclepolicies.elastic-config-operator.freepik.com
+helm install my-release freepik/elastic-config-operator
 ```
 
 ### Updating CRDs
@@ -236,13 +236,13 @@ Helm does not update CRDs on `helm upgrade`. To update CRDs:
 
 ```bash
 # Method 1: Apply directly from repository
-kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-operator/v1.0.0/config/crd/bases/
+kubectl apply -f https://raw.githubusercontent.com/freepik-company/elastic-config-operator/v1.0.0/config/crd/bases/
 
 # Method 2: From local chart
-kubectl apply -f charts/eck-config-operator/crds/
+kubectl apply -f charts/elastic-config-operator/crds/
 
 # Then upgrade the release
-helm upgrade my-release freepik/eck-config-operator
+helm upgrade my-release freepik/elastic-config-operator
 ```
 
 ## Troubleshooting
@@ -260,7 +260,7 @@ Ensure the operator has permissions to read ECK Elasticsearch resources. This is
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or pull request on [GitHub](https://github.com/freepik-company/eck-config-operator).
+Contributions are welcome! Please open an issue or pull request on [GitHub](https://github.com/freepik-company/elastic-config-operator).
 
 ## License
 

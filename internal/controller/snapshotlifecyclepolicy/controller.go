@@ -29,9 +29,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/controller"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/pools"
+	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/pools"
 )
 
 // SnapshotLifecyclePolicyReconciler reconciles a SnapshotLifecyclePolicy object
@@ -41,9 +41,9 @@ type SnapshotLifecyclePolicyReconciler struct {
 	ElasticsearchConnectionsPool *pools.ElasticsearchConnectionsStore
 }
 
-// +kubebuilder:rbac:groups=eck-config-operator.freepik.com,resources=snapshotlifecyclepolicies,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=eck-config-operator.freepik.com,resources=snapshotlifecyclepolicies/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=eck-config-operator.freepik.com,resources=snapshotlifecyclepolicies/finalizers,verbs=update
+// +kubebuilder:rbac:groups=elastic-config-operator.freepik.com,resources=snapshotlifecyclepolicies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=elastic-config-operator.freepik.com,resources=snapshotlifecyclepolicies/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=elastic-config-operator.freepik.com,resources=snapshotlifecyclepolicies/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 // +kubebuilder:rbac:groups=elasticsearch.k8s.elastic.co,resources=elasticsearches,verbs=get;list;watch
 

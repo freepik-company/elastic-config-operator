@@ -1,4 +1,4 @@
-🎉 ECK Config Operator has been installed!
+🎉 Elastic Config Operator has been installed!
 
 📋 Release Information:
   - Release Name: {{ .Release.Name }}
@@ -17,14 +17,14 @@
 {{- if .Values.crds.keep }}
   ⚠️  Note: CRDs are configured to be KEPT on uninstall to prevent data loss.
   To remove CRDs manually, run:
-    kubectl delete crd indexlifecyclepolicies.eck-config-operator.freepik.com
-    kubectl delete crd indextemplates.eck-config-operator.freepik.com
-    kubectl delete crd snapshotlifecyclepolicies.eck-config-operator.freepik.com
-    kubectl delete crd snapshotrepositories.eck-config-operator.freepik.com
+    kubectl delete crd indexlifecyclepolicies.elastic-config-operator.freepik.com
+    kubectl delete crd indextemplates.elastic-config-operator.freepik.com
+    kubectl delete crd snapshotlifecyclepolicies.elastic-config-operator.freepik.com
+    kubectl delete crd snapshotrepositories.elastic-config-operator.freepik.com
 {{- end }}
 {{- else }}
 ⚠️  CRDs were NOT installed. You must install them manually:
-  kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-operator/main/config/crd/bases/
+  kubectl apply -f https://raw.githubusercontent.com/freepik-company/elastic-config-operator/main/config/crd/bases/
 {{- end }}
 
 🔐 RBAC Configuration:
@@ -45,7 +45,7 @@
 {{- if .Values.controller.metrics.enabled }}
   - Metrics endpoint: {{ .Release.Name }}-metrics:{{ .Values.controller.metrics.service.port }}
   {{- if .Values.controller.metrics.service.enabled }}
-  - Access metrics: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "eck-config-operator.fullname" . }}-metrics {{ .Values.controller.metrics.service.port }}:{{ .Values.controller.metrics.service.port }}
+  - Access metrics: kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "elastic-config-operator.fullname" . }}-metrics {{ .Values.controller.metrics.service.port }}:{{ .Values.controller.metrics.service.port }}
   {{- end }}
 {{- else }}
   - Metrics are disabled
@@ -54,14 +54,14 @@
 🚀 Quick Start:
 
 1. Verify the operator is running:
-   kubectl get deployment -n {{ .Release.Namespace }} {{ include "eck-config-operator.fullname" . }}
+   kubectl get deployment -n {{ .Release.Namespace }} {{ include "elastic-config-operator.fullname" . }}
 
 2. Check operator logs:
-   kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "eck-config-operator.name" . }} -f
+   kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "elastic-config-operator.name" . }} -f
 
 3. Create your first IndexLifecyclePolicy:
    kubectl apply -f - <<EOF
-   apiVersion: eck-config-operator.freepik.com/v1alpha1
+   apiVersion: elastic-config-operator.freepik.com/v1alpha1
    kind: IndexLifecyclePolicy
    metadata:
      name: my-ilm-policy
@@ -90,8 +90,8 @@
    kubectl describe indexlifecyclepolicy my-ilm-policy
 
 📖 Documentation:
-  - GitHub: https://github.com/freepik-company/eck-config-operator
-  - Helm Chart: https://github.com/freepik-company/eck-config-operator/tree/main/charts/eck-config-operator
+  - GitHub: https://github.com/freepik-company/elastic-config-operator
+  - Helm Chart: https://github.com/freepik-company/elastic-config-operator/tree/main/charts/elastic-config-operator
 
 💡 Tips:
   - Use 'kubectl get indexlifecyclepolicies -o wide' to see detailed status

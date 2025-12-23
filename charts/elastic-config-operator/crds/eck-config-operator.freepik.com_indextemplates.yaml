@@ -4,14 +4,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: snapshotlifecyclepolicies.eck-config-operator.freepik.com
+  name: indextemplates.elastic-config-operator.freepik.com
 spec:
-  group: eck-config-operator.freepik.com
+  group: elastic-config-operator.freepik.com
   names:
-    kind: SnapshotLifecyclePolicy
-    listKind: SnapshotLifecyclePolicyList
-    plural: snapshotlifecyclepolicies
-    singular: snapshotlifecyclepolicy
+    kind: IndexTemplate
+    listKind: IndexTemplateList
+    plural: indextemplates
+    singular: indextemplate
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -34,8 +34,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: SnapshotLifecyclePolicy is the Schema for the snapshotlifecyclepolicies
-          API
+        description: IndexTemplate is the Schema for the indextemplates API
         properties:
           apiVersion:
             description: |-
@@ -55,7 +54,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: spec defines the desired state of SnapshotLifecyclePolicy
+            description: spec defines the desired state of IndexTemplate
             properties:
               resourceSelector:
                 description: ResourceSelector defines how to select and connect to
@@ -137,7 +136,7 @@ spec:
             - resources
             type: object
           status:
-            description: status defines the observed state of SnapshotLifecyclePolicy
+            description: status defines the observed state of IndexTemplate
             properties:
               appliedResources:
                 description: AppliedResources is a list of resource names that have
@@ -147,7 +146,7 @@ spec:
                 type: array
               conditions:
                 description: |-
-                  conditions represent the current state of the SnapshotLifecyclePolicy resource.
+                  conditions represent the current state of the IndexTemplate resource.
                   Each condition has a unique type and reflects the status of a specific aspect of the resource.
 
                   Standard condition types include:
@@ -225,7 +224,7 @@ spec:
                 type: string
               phase:
                 description: |-
-                  Phase represents the current phase of the SnapshotLifecyclePolicy
+                  Phase represents the current phase of the IndexTemplate
                   Possible values: Pending, Syncing, Ready, Error
                 type: string
               targetCluster:

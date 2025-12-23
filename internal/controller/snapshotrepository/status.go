@@ -24,9 +24,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	//
-	"eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/controller"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/globals"
+	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
 // UpdateConditionSuccess updates the status of the SearchRule resource with a success condition

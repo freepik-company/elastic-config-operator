@@ -4,28 +4,32 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: indexlifecyclepolicies.eck-config-operator.freepik.com
+  name: indexstatemanagements.elastic-config-operator.freepik.com
 spec:
-  group: eck-config-operator.freepik.com
+  group: elastic-config-operator.freepik.com
   names:
-    kind: IndexLifecyclePolicy
-    listKind: IndexLifecyclePolicyList
-    plural: indexlifecyclepolicies
-    singular: indexlifecyclepolicy
+    kind: IndexStateManagement
+    listKind: IndexStateManagementList
+    plural: indexstatemanagements
+    singular: indexstatemanagement
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.phase
+    - description: Current phase of the IndexStateManagement
+      jsonPath: .status.phase
       name: Phase
       type: string
-    - jsonPath: .status.targetCluster
+    - description: Target cluster
+      jsonPath: .status.targetCluster
       name: Cluster
       type: string
-    - jsonPath: .status.message
+    - description: Detailed status message
+      jsonPath: .status.message
       name: Message
       priority: 1
       type: string
-    - jsonPath: .status.lastSyncTime
+    - description: Last successful synchronization time
+      jsonPath: .status.lastSyncTime
       name: Last Sync
       type: date
     - jsonPath: .metadata.creationTimestamp
@@ -34,8 +38,9 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IndexLifecyclePolicy is the Schema for the indexlifecyclepolicies
-          API
+        description: |-
+          IndexStateManagement is the Schema for the indexstatemanagements API
+          This resource is specifically for OpenSearch clusters (ISM API)
         properties:
           apiVersion:
             description: |-
@@ -55,11 +60,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: spec defines the desired state of IndexLifecyclePolicy
+            description: spec defines the desired state of IndexStateManagement
             properties:
               resourceSelector:
-                description: ResourceSelector defines how to select and connect to
-                  an Elasticsearch cluster
+                description: ResourceSelector specifies the target OpenSearch cluster
+                  for ISM policies
                 properties:
                   caCertSecretRef:
                     description: CACertSecretRef references a Secret containing the
@@ -126,36 +131,33 @@ spec:
               resources:
                 additionalProperties:
                   x-kubernetes-preserve-unknown-fields: true
+                description: |-
+                  Resources contains the ISM policies to apply, keyed by policy name
+                  Each key represents a policy name, the value is the policy definition
                 type: object
               syncInterval:
-                default: 10s
-                description: SyncInterval defines the interval for reconciliation
-                  (e.g., "30s", "5m"). Defaults to 10s.
+                description: |-
+                  SyncInterval defines how often the operator will reconcile this resource (default: 10s)
+                  Examples: "30s", "5m", "1h"
                 type: string
             required:
             - resourceSelector
             - resources
             type: object
           status:
-            description: status defines the observed state of IndexLifecyclePolicy
+            description: status defines the observed state of IndexStateManagement
             properties:
               appliedResources:
-                description: AppliedResources is a list of resource names that have
-                  been successfully applied to Elasticsearch
+                description: |-
+                  AppliedResources lists the names of the policies that were successfully applied to OpenSearch.
+                  This is used to track which policies need to be deleted if they are removed from the spec.
                 items:
                   type: string
                 type: array
               conditions:
                 description: |-
-                  conditions represent the current state of the IndexLifecyclePolicy resource.
+                  conditions represent the current state of the IndexStateManagement resource.
                   Each condition has a unique type and reflects the status of a specific aspect of the resource.
-
-                  Standard condition types include:
-                  - "Available": the resource is fully functional
-                  - "Progressing": the resource is being created or updated
-                  - "Degraded": the resource failed to reach or maintain its desired state
-
-                  The status of each condition is one of True, False, or Unknown.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -215,22 +217,22 @@ spec:
                 - type
                 x-kubernetes-list-type: map
               lastSyncTime:
-                description: LastSyncTime is the timestamp of the last successful
-                  synchronization with Elasticsearch
+                description: LastSyncTime records the last time the resource was successfully
+                  synchronized with OpenSearch.
                 format: date-time
                 type: string
               message:
-                description: Message provides additional information about the current
-                  phase
+                description: Message provides a human-readable message about the current
+                  status.
                 type: string
               phase:
                 description: |-
-                  Phase represents the current phase of the IndexLifecyclePolicy
-                  Possible values: Pending, Syncing, Ready, Error
+                  Phase indicates the current phase of the IndexStateManagement.
+                  It can be "Pending", "Syncing", "Ready", or "Error".
                 type: string
               targetCluster:
                 description: |-
-                  TargetCluster is the namespace/name of the target Elasticsearch cluster
+                  TargetCluster is the namespace/name of the target OpenSearch cluster
                   Format: "namespace/name"
                 type: string
             type: object

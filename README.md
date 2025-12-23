@@ -1,10 +1,10 @@
-# ECK Config Operator
+# Elastic Config Operator
 
 A Kubernetes operator to manage Elasticsearch and OpenSearch configuration (ILM/ISM policies, Index Templates, Snapshot Lifecycle Policies, Snapshot Repositories, and Cluster Settings) as Kubernetes Custom Resources.
 
 ## Overview
 
-The ECK Config Operator simplifies the management of Elasticsearch configuration by allowing you to define and manage Elasticsearch resources declaratively using Kubernetes Custom Resources. It works seamlessly with [Elastic Cloud on Kubernetes (ECK)](https://www.elastic.co/guide/en/cloud-on-k8s/current/index.html) or any standalone Elasticsearch cluster.
+The Elastic Config Operator simplifies the management of Elasticsearch and OpenSearch configuration by allowing you to define and manage resources declaratively using Kubernetes Custom Resources. It works seamlessly with [Elastic Cloud on Kubernetes (ECK)](https://www.elastic.co/guide/en/cloud-on-k8s/current/index.html) or any standalone Elasticsearch/OpenSearch cluster.
 
 ### Features
 
@@ -45,7 +45,7 @@ The ECK Config Operator simplifies the management of Elasticsearch configuration
 1. **Install the CRDs:**
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/<org>/eck-config-operator/<tag>/config/crd/bases/
+kubectl apply -f https://raw.githubusercontent.com/<org>/elastic-config-operator/<tag>/config/crd/bases/
 ```
 
 2. **Deploy the operator:**
@@ -59,8 +59,8 @@ kubectl apply -k config/default
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/<org>/eck-config-operator.git
-cd eck-config-operator
+git clone https://github.com/<org>/elastic-config-operator.git
+cd elastic-config-operator
 ```
 
 2. **Install CRDs:**
@@ -72,7 +72,7 @@ make install
 3. **Deploy the operator:**
 
 ```bash
-make deploy IMG=<your-registry>/eck-config-operator:tag
+make deploy IMG=<your-registry>/elastic-config-operator:tag
 ```
 
 ### Quick Start Example
@@ -86,7 +86,7 @@ kubectl apply -f config/samples/elasticsearch_sample.yaml
 #### 2. Create an Index Lifecycle Policy
 
 ```yaml
-apiVersion: eck-config-operator.freepik.com/v1alpha1
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
 kind: IndexLifecyclePolicy
 metadata:
   name: my-ilm-policies
@@ -186,7 +186,7 @@ spec:
 ### Index Template
 
 ```yaml
-apiVersion: eck-config-operator.freepik.com/v1alpha1
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
 kind: IndexTemplate
 metadata:
   name: my-index-templates
@@ -213,7 +213,7 @@ spec:
 ### Snapshot Repository
 
 ```yaml
-apiVersion: eck-config-operator.freepik.com/v1alpha1
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
 kind: SnapshotRepository
 metadata:
   name: my-snapshot-repos
@@ -231,7 +231,7 @@ spec:
 ### Snapshot Lifecycle Policy
 
 ```yaml
-apiVersion: eck-config-operator.freepik.com/v1alpha1
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
 kind: SnapshotLifecyclePolicy
 metadata:
   name: my-slm-policies
@@ -256,7 +256,7 @@ spec:
 ### Cluster Settings
 
 ```yaml
-apiVersion: eck-config-operator.freepik.com/v1alpha1
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
 kind: ClusterSettings
 metadata:
   name: my-cluster-settings
@@ -282,7 +282,7 @@ spec:
 ⚠️ **Note**: This resource is specifically for OpenSearch clusters. For Elasticsearch, use `IndexLifecyclePolicy` instead.
 
 ```yaml
-apiVersion: eck-config-operator.freepik.com/v1alpha1
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
 kind: IndexStateManagement
 metadata:
   name: my-ism-policies
@@ -398,10 +398,10 @@ make cleanup-local-dev
 make build
 
 # Build and push Docker image
-make docker-build docker-push IMG=<registry>/eck-config-operator:tag
+make docker-build docker-push IMG=<registry>/elastic-config-operator:tag
 
 # Deploy to cluster
-make deploy IMG=<registry>/eck-config-operator:tag
+make deploy IMG=<registry>/elastic-config-operator:tag
 ```
 
 ### Testing
@@ -425,10 +425,10 @@ The operator requires the following permissions:
 |----------|-------|--------|
 | `secrets` | get, list, watch | Read Elasticsearch credentials and CA certificates |
 | `elasticsearches.elasticsearch.k8s.elastic.co` | get, list, watch | Discover ECK Elasticsearch resources |
-| `indexlifecyclepolicies.eck-config-operator.freepik.com` | * | Manage ILM policy CRs |
-| `indextemplates.eck-config-operator.freepik.com` | * | Manage Index Template CRs |
-| `snapshotlifecyclepolicies.eck-config-operator.freepik.com` | * | Manage SLM policy CRs |
-| `snapshotrepositories.eck-config-operator.freepik.com` | * | Manage Snapshot Repository CRs |
+| `indexlifecyclepolicies.elastic-config-operator.freepik.com` | * | Manage ILM policy CRs |
+| `indextemplates.elastic-config-operator.freepik.com` | * | Manage Index Template CRs |
+| `snapshotlifecyclepolicies.elastic-config-operator.freepik.com` | * | Manage SLM policy CRs |
+| `snapshotrepositories.elastic-config-operator.freepik.com` | * | Manage Snapshot Repository CRs |
 
 ## Architecture
 
@@ -471,7 +471,7 @@ CR Created → Status: Pending
 ### Operator logs
 
 ```bash
-kubectl logs -n eck-config-operator-system deployment/eck-config-operator-controller-manager -f
+kubectl logs -n elastic-config-operator-system deployment/elastic-config-operator-controller-manager -f
 ```
 
 ### Check resource status

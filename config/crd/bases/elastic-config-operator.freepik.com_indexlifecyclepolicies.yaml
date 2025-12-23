@@ -4,14 +4,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: indextemplates.eck-config-operator.freepik.com
+  name: indexlifecyclepolicies.elastic-config-operator.freepik.com
 spec:
-  group: eck-config-operator.freepik.com
+  group: elastic-config-operator.freepik.com
   names:
-    kind: IndexTemplate
-    listKind: IndexTemplateList
-    plural: indextemplates
-    singular: indextemplate
+    kind: IndexLifecyclePolicy
+    listKind: IndexLifecyclePolicyList
+    plural: indexlifecyclepolicies
+    singular: indexlifecyclepolicy
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -34,7 +34,8 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: IndexTemplate is the Schema for the indextemplates API
+        description: IndexLifecyclePolicy is the Schema for the indexlifecyclepolicies
+          API
         properties:
           apiVersion:
             description: |-
@@ -54,7 +55,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: spec defines the desired state of IndexTemplate
+            description: spec defines the desired state of IndexLifecyclePolicy
             properties:
               resourceSelector:
                 description: ResourceSelector defines how to select and connect to
@@ -136,7 +137,7 @@ spec:
             - resources
             type: object
           status:
-            description: status defines the observed state of IndexTemplate
+            description: status defines the observed state of IndexLifecyclePolicy
             properties:
               appliedResources:
                 description: AppliedResources is a list of resource names that have
@@ -146,7 +147,7 @@ spec:
                 type: array
               conditions:
                 description: |-
-                  conditions represent the current state of the IndexTemplate resource.
+                  conditions represent the current state of the IndexLifecyclePolicy resource.
                   Each condition has a unique type and reflects the status of a specific aspect of the resource.
 
                   Standard condition types include:
@@ -224,7 +225,7 @@ spec:
                 type: string
               phase:
                 description: |-
-                  Phase represents the current phase of the IndexTemplate
+                  Phase represents the current phase of the IndexLifecyclePolicy
                   Possible values: Pending, Syncing, Ready, Error
                 type: string
               targetCluster:

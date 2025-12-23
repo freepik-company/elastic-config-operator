@@ -1,9 +1,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "eck-config-operator.fullname" . }}-manager
+  name: {{ include "elastic-config-operator.fullname" . }}-manager
   labels:
-    {{- include "eck-config-operator.labels" . | nindent 4 }}
+    {{- include "elastic-config-operator.labels" . | nindent 4 }}
 rules:
 {{- if .Values.controller.rbac.clusterWideSecrets }}
 - apiGroups:
@@ -24,7 +24,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - eck-config-operator.freepik.com
+  - elastic-config-operator.freepik.com
   resources:
   - clustersettings
   - indexlifecyclepolicies
@@ -41,7 +41,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - eck-config-operator.freepik.com
+  - elastic-config-operator.freepik.com
   resources:
   - clustersettings/finalizers
   - indexlifecyclepolicies/finalizers
@@ -52,7 +52,7 @@ rules:
   verbs:
   - update
 - apiGroups:
-  - eck-config-operator.freepik.com
+  - elastic-config-operator.freepik.com
   resources:
   - clustersettings/status
   - indexlifecyclepolicies/status

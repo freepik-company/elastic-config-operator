@@ -7,12 +7,12 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CRDS_DIR="$(dirname "$SCRIPT_DIR")/crds"
 CRDS=(
-  "clustersettings.eck-config-operator.freepik.com"
-  "indexlifecyclepolicies.eck-config-operator.freepik.com"
-  "indexstatemanagements.eck-config-operator.freepik.com"
-  "indextemplates.eck-config-operator.freepik.com"
-  "snapshotlifecyclepolicies.eck-config-operator.freepik.com"
-  "snapshotrepositories.eck-config-operator.freepik.com"
+  "clustersettings.elastic-config-operator.freepik.com"
+  "indexlifecyclepolicies.elastic-config-operator.freepik.com"
+  "indexstatemanagements.elastic-config-operator.freepik.com"
+  "indextemplates.elastic-config-operator.freepik.com"
+  "snapshotlifecyclepolicies.elastic-config-operator.freepik.com"
+  "snapshotrepositories.elastic-config-operator.freepik.com"
 )
 
 COLOR_GREEN='\033[0;32m'

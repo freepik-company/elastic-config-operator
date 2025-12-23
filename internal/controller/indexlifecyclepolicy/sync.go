@@ -29,8 +29,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	//
-	"eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/globals"
+	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
 // Sync execute the query to the elasticsearch and evaluate the condition. Then trigger the action adding the alert to the pool

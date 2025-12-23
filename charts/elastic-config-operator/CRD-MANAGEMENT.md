@@ -1,6 +1,6 @@
 # CRD Management Guide
 
-This guide explains how to manage Custom Resource Definitions (CRDs) with the ECK Config Operator Helm chart.
+This guide explains how to manage Custom Resource Definitions (CRDs) with the Elastic Config Operator Helm chart.
 
 ## Understanding CRD Installation
 
@@ -22,7 +22,7 @@ This prevents accidental data loss of your Elasticsearch configurations.
 ### Scenario 1: Fresh Installation
 
 ```bash
-helm install eck-config-operator freepik/eck-config-operator
+helm install elastic-config-operator freepik/elastic-config-operator
 ```
 
 ✅ Everything is installed including CRDs.
@@ -33,21 +33,21 @@ If CRDs are already installed (from a previous installation):
 
 ```bash
 # Option A: Skip CRDs (Helm will not try to install them)
-helm install eck-config-operator freepik/eck-config-operator --skip-crds
+helm install elastic-config-operator freepik/elastic-config-operator --skip-crds
 
 # Option B: Let Helm handle it (may show warnings but won't fail)
-helm install eck-config-operator freepik/eck-config-operator
+helm install elastic-config-operator freepik/elastic-config-operator
 ```
 
 ### Scenario 3: Upgrading the Chart
 
 ```bash
 # CRDs are NOT upgraded automatically
-helm upgrade eck-config-operator freepik/eck-config-operator
+helm upgrade elastic-config-operator freepik/elastic-config-operator
 
 # To update CRDs, apply them manually first:
 kubectl apply -f crds/
-helm upgrade eck-config-operator freepik/eck-config-operator
+helm upgrade elastic-config-operator freepik/elastic-config-operator
 ```
 
 ### Scenario 4: Managing CRDs Separately
@@ -59,7 +59,7 @@ If you want full control over CRDs:
 kubectl apply -f crds/
 
 # Install chart without CRDs
-helm install eck-config-operator freepik/eck-config-operator \
+helm install elastic-config-operator freepik/elastic-config-operator \
   --set crds.install=false
 ```
 
@@ -75,7 +75,7 @@ Error: rendered manifests contain a resource that already exists
 **Solution:**
 ```bash
 # Use --skip-crds flag
-helm install eck-config-operator freepik/eck-config-operator --skip-crds
+helm install elastic-config-operator freepik/elastic-config-operator --skip-crds
 ```
 
 ### Issue 2: CRDs Not Updating
@@ -85,13 +85,13 @@ helm install eck-config-operator freepik/eck-config-operator --skip-crds
 **Solution:**
 ```bash
 # Update CRDs manually
-kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-operator/v1.0.0/config/crd/bases/
+kubectl apply -f https://raw.githubusercontent.com/freepik-company/elastic-config-operator/v1.0.0/config/crd/bases/
 
 # OR from local chart
-kubectl apply -f charts/eck-config-operator/crds/
+kubectl apply -f charts/elastic-config-operator/crds/
 
 # Then upgrade
-helm upgrade eck-config-operator freepik/eck-config-operator
+helm upgrade elastic-config-operator freepik/elastic-config-operator
 ```
 
 ### Issue 3: Removing CRDs and All Data
@@ -100,7 +100,7 @@ helm upgrade eck-config-operator freepik/eck-config-operator
 
 ```bash
 # 1. Uninstall the chart
-helm uninstall eck-config-operator
+helm uninstall elastic-config-operator
 
 # 2. Delete all custom resources first (optional, to avoid orphans)
 kubectl delete indexlifecyclepolicies --all --all-namespaces
@@ -109,10 +109,10 @@ kubectl delete snapshotlifecyclepolicies --all --all-namespaces
 kubectl delete snapshotrepositories --all --all-namespaces
 
 # 3. Delete CRDs
-kubectl delete crd indexlifecyclepolicies.eck-config-operator.freepik.com
-kubectl delete crd indextemplates.eck-config-operator.freepik.com
-kubectl delete crd snapshotlifecyclepolicies.eck-config-operator.freepik.com
-kubectl delete crd snapshotrepositories.eck-config-operator.freepik.com
+kubectl delete crd indexlifecyclepolicies.elastic-config-operator.freepik.com
+kubectl delete crd indextemplates.elastic-config-operator.freepik.com
+kubectl delete crd snapshotlifecyclepolicies.elastic-config-operator.freepik.com
+kubectl delete crd snapshotrepositories.elastic-config-operator.freepik.com
 ```
 
 ### Issue 4: CRD Version Mismatch
@@ -124,10 +124,10 @@ kubectl delete crd snapshotrepositories.eck-config-operator.freepik.com
 **Solution:**
 ```bash
 # Check CRD version
-kubectl get crd indexlifecyclepolicies.eck-config-operator.freepik.com -o yaml | grep controller-gen
+kubectl get crd indexlifecyclepolicies.elastic-config-operator.freepik.com -o yaml | grep controller-gen
 
 # Update to match operator version
-kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-operator/v1.0.0/config/crd/bases/
+kubectl apply -f https://raw.githubusercontent.com/freepik-company/elastic-config-operator/v1.0.0/config/crd/bases/
 ```
 
 ## Best Practices
@@ -138,12 +138,12 @@ kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-op
    ```bash
    # In GitOps or CI/CD pipeline:
    kubectl apply -f crds/
-   helm upgrade eck-config-operator freepik/eck-config-operator --skip-crds
+   helm upgrade elastic-config-operator freepik/elastic-config-operator --skip-crds
    ```
 
 2. **Version CRDs explicitly**:
    ```bash
-   kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-operator/v1.0.0/config/crd/bases/
+   kubectl apply -f https://raw.githubusercontent.com/freepik-company/elastic-config-operator/v1.0.0/config/crd/bases/
    ```
 
 3. **Test CRD updates** in staging first
@@ -152,14 +152,14 @@ kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-op
 
 1. **Let Helm manage everything**:
    ```bash
-   helm install eck-config-operator freepik/eck-config-operator
+   helm install elastic-config-operator freepik/elastic-config-operator
    ```
 
 2. **Clean installs** are OK:
    ```bash
-   helm uninstall eck-config-operator
-   kubectl delete crds -l app.kubernetes.io/name=eck-config-operator
-   helm install eck-config-operator freepik/eck-config-operator
+   helm uninstall elastic-config-operator
+   kubectl delete crds -l app.kubernetes.io/name=elastic-config-operator
+   helm install elastic-config-operator freepik/elastic-config-operator
    ```
 
 ## Verification
@@ -167,27 +167,27 @@ kubectl apply -f https://raw.githubusercontent.com/freepik-company/eck-config-op
 ### Check if CRDs are installed
 
 ```bash
-kubectl get crds | grep eck-config-operator
+kubectl get crds | grep elastic-config-operator
 ```
 
 Expected output:
 ```
-indexlifecyclepolicies.eck-config-operator.freepik.com
-indextemplates.eck-config-operator.freepik.com
-snapshotlifecyclepolicies.eck-config-operator.freepik.com
-snapshotrepositories.eck-config-operator.freepik.com
+indexlifecyclepolicies.elastic-config-operator.freepik.com
+indextemplates.elastic-config-operator.freepik.com
+snapshotlifecyclepolicies.elastic-config-operator.freepik.com
+snapshotrepositories.elastic-config-operator.freepik.com
 ```
 
 ### Check CRD version
 
 ```bash
-kubectl get crd indexlifecyclepolicies.eck-config-operator.freepik.com -o jsonpath='{.metadata.annotations.controller-gen\.kubebuilder\.io/version}'
+kubectl get crd indexlifecyclepolicies.elastic-config-operator.freepik.com -o jsonpath='{.metadata.annotations.controller-gen\.kubebuilder\.io/version}'
 ```
 
 ### Verify CRD annotations
 
 ```bash
-kubectl get crd indexlifecyclepolicies.eck-config-operator.freepik.com -o jsonpath='{.metadata.annotations.helm\.sh/resource-policy}'
+kubectl get crd indexlifecyclepolicies.elastic-config-operator.freepik.com -o jsonpath='{.metadata.annotations.helm\.sh/resource-policy}'
 ```
 
 Should output: `keep`
@@ -212,11 +212,11 @@ This requires modifying the CRDs to remove the `helm.sh/resource-policy: keep` a
 ```bash
 # 1. CRDs are already installed manually
 # 2. Install chart without CRDs first
-helm install eck-config-operator freepik/eck-config-operator --skip-crds
+helm install elastic-config-operator freepik/elastic-config-operator --skip-crds
 
 # 3. Later, you can let Helm adopt them
-kubectl annotate crd indexlifecyclepolicies.eck-config-operator.freepik.com meta.helm.sh/release-name=eck-config-operator
-kubectl annotate crd indexlifecyclepolicies.eck-config-operator.freepik.com meta.helm.sh/release-namespace=default
+kubectl annotate crd indexlifecyclepolicies.elastic-config-operator.freepik.com meta.helm.sh/release-name=elastic-config-operator
+kubectl annotate crd indexlifecyclepolicies.elastic-config-operator.freepik.com meta.helm.sh/release-namespace=default
 # (repeat for other CRDs)
 ```
 
@@ -224,12 +224,12 @@ kubectl annotate crd indexlifecyclepolicies.eck-config-operator.freepik.com meta
 
 ```bash
 # 1. Remove Helm annotations
-kubectl annotate crd indexlifecyclepolicies.eck-config-operator.freepik.com meta.helm.sh/release-name-
-kubectl annotate crd indexlifecyclepolicies.eck-config-operator.freepik.com meta.helm.sh/release-namespace-
+kubectl annotate crd indexlifecyclepolicies.elastic-config-operator.freepik.com meta.helm.sh/release-name-
+kubectl annotate crd indexlifecyclepolicies.elastic-config-operator.freepik.com meta.helm.sh/release-namespace-
 # (repeat for other CRDs)
 
 # 2. Upgrade chart to not manage CRDs
-helm upgrade eck-config-operator freepik/eck-config-operator \
+helm upgrade elastic-config-operator freepik/elastic-config-operator \
   --set crds.install=false \
   --skip-crds
 ```

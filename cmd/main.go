@@ -35,15 +35,15 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	eckconfigoperatorfreepikcomv1alpha1 "eck-config-operator.freepik.com/eck-config-operator/api/v1alpha1"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/clustersettings"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/indexlifecyclepolicy"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/indexstatemanagement"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/indextemplate"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/snapshotlifecyclepolicy"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/controller/snapshotrepository"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/globals"
-	"eck-config-operator.freepik.com/eck-config-operator/internal/pools"
+	eckconfigoperatorfreepikcomv1alpha1 "elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/clustersettings"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indexlifecyclepolicy"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indexstatemanagement"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indextemplate"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotlifecyclepolicy"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotrepository"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/pools"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -172,7 +172,7 @@ func main() {
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "30c00483.eck-config-operator.freepik.com",
+		LeaderElectionID:       "30c00483.elastic-config-operator.freepik.com",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly

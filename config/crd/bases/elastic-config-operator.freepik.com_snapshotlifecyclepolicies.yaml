@@ -4,32 +4,28 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: clustersettings.eck-config-operator.freepik.com
+  name: snapshotlifecyclepolicies.elastic-config-operator.freepik.com
 spec:
-  group: eck-config-operator.freepik.com
+  group: elastic-config-operator.freepik.com
   names:
-    kind: ClusterSettings
-    listKind: ClusterSettingsList
-    plural: clustersettings
-    singular: clustersettings
+    kind: SnapshotLifecyclePolicy
+    listKind: SnapshotLifecyclePolicyList
+    plural: snapshotlifecyclepolicies
+    singular: snapshotlifecyclepolicy
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - description: Current phase of the ClusterSettings
-      jsonPath: .status.phase
+    - jsonPath: .status.phase
       name: Phase
       type: string
-    - description: Target cluster
-      jsonPath: .status.targetCluster
+    - jsonPath: .status.targetCluster
       name: Cluster
       type: string
-    - description: Detailed status message
-      jsonPath: .status.message
+    - jsonPath: .status.message
       name: Message
       priority: 1
       type: string
-    - description: Last successful synchronization time
-      jsonPath: .status.lastSyncTime
+    - jsonPath: .status.lastSyncTime
       name: Last Sync
       type: date
     - jsonPath: .metadata.creationTimestamp
@@ -38,7 +34,8 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: ClusterSettings is the Schema for the clustersettings API
+        description: SnapshotLifecyclePolicy is the Schema for the snapshotlifecyclepolicies
+          API
         properties:
           apiVersion:
             description: |-
@@ -58,11 +55,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: spec defines the desired state of ClusterSettings
+            description: spec defines the desired state of SnapshotLifecyclePolicy
             properties:
               resourceSelector:
-                description: ResourceSelector specifies the target Elasticsearch cluster
-                  for cluster settings
+                description: ResourceSelector defines how to select and connect to
+                  an Elasticsearch cluster
                 properties:
                   caCertSecretRef:
                     description: CACertSecretRef references a Secret containing the
@@ -129,35 +126,36 @@ spec:
               resources:
                 additionalProperties:
                   x-kubernetes-preserve-unknown-fields: true
-                description: |-
-                  Resources contains the cluster settings to apply, keyed by setting category
-                  Each key represents a category of settings (e.g., "persistent", "transient")
-                  The value is a JSON object containing the actual settings
                 type: object
               syncInterval:
-                description: |-
-                  SyncInterval defines how often the operator will reconcile this resource (default: 10s)
-                  Examples: "30s", "5m", "1h"
+                default: 10s
+                description: SyncInterval defines the interval for reconciliation
+                  (e.g., "30s", "5m"). Defaults to 10s.
                 type: string
             required:
             - resourceSelector
             - resources
             type: object
           status:
-            description: status defines the observed state of ClusterSettings
+            description: status defines the observed state of SnapshotLifecyclePolicy
             properties:
               appliedResources:
-                description: |-
-                  AppliedResources lists the individual settings that were successfully applied to Elasticsearch.
-                  Format: "category.setting.path" (e.g., "persistent.cluster.routing.allocation.enable")
-                  This is used to track which settings need to be deleted if they are removed from the spec.
+                description: AppliedResources is a list of resource names that have
+                  been successfully applied to Elasticsearch
                 items:
                   type: string
                 type: array
               conditions:
                 description: |-
-                  conditions represent the current state of the ClusterSettings resource.
+                  conditions represent the current state of the SnapshotLifecyclePolicy resource.
                   Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -217,18 +215,18 @@ spec:
                 - type
                 x-kubernetes-list-type: map
               lastSyncTime:
-                description: LastSyncTime records the last time the resource was successfully
-                  synchronized with Elasticsearch.
+                description: LastSyncTime is the timestamp of the last successful
+                  synchronization with Elasticsearch
                 format: date-time
                 type: string
               message:
-                description: Message provides a human-readable message about the current
-                  status.
+                description: Message provides additional information about the current
+                  phase
                 type: string
               phase:
                 description: |-
-                  Phase indicates the current phase of the ClusterSettings.
-                  It can be "Pending", "Syncing", "Ready", or "Error".
+                  Phase represents the current phase of the SnapshotLifecyclePolicy
+                  Possible values: Pending, Syncing, Ready, Error
                 type: string
               targetCluster:
                 description: |-

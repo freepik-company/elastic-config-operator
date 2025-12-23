@@ -2,12 +2,12 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/eck-config-operator.freepik.com_indexlifecyclepolicies.yaml
-- bases/eck-config-operator.freepik.com_indextemplates.yaml
-- bases/eck-config-operator.freepik.com_snapshotrepositories.yaml
-- bases/eck-config-operator.freepik.com_snapshotlifecyclepolicies.yaml
-- bases/eck-config-operator.freepik.com_clustersettings.yaml
-- bases/eck-config-operator.freepik.com_indexstatemanagements.yaml
+- bases/elastic-config-operator.freepik.com_indexlifecyclepolicies.yaml
+- bases/elastic-config-operator.freepik.com_indextemplates.yaml
+- bases/elastic-config-operator.freepik.com_snapshotrepositories.yaml
+- bases/elastic-config-operator.freepik.com_snapshotlifecyclepolicies.yaml
+- bases/elastic-config-operator.freepik.com_clustersettings.yaml
+- bases/elastic-config-operator.freepik.com_indexstatemanagements.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

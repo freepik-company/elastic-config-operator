@@ -1,4 +1,4 @@
-# Example values file for ECK Config Operator
+# Example values file for Elastic Config Operator
 # Copy this file to values.yaml and modify as needed
 
 # CRD Configuration
@@ -16,7 +16,7 @@ controller:
   replicaCount: 1
 
   image:
-    repository: ghcr.io/freepik-company/eck-config-operator
+    repository: ghcr.io/freepik-company/elastic-config-operator
     pullPolicy: IfNotPresent
     # tag: "1.0.0"  # Uncomment to use specific version
 
@@ -74,7 +74,7 @@ controller:
   #               - key: app.kubernetes.io/name
   #                 operator: In
   #                 values:
-  #                   - eck-config-operator
+  #                   - elastic-config-operator
   #           topologyKey: kubernetes.io/hostname
 
   metrics:

@@ -1,4 +1,4 @@
-# Default values for ECK Config Operator.
+# Default values for Elastic Config Operator.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -18,7 +18,7 @@ controller:
   replicaCount: 1
 
   image:
-    repository: ghcr.io/freepik-company/eck-config-operator
+    repository: ghcr.io/freepik-company/elastic-config-operator
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
@@ -32,7 +32,7 @@ controller:
     annotations: {}
     # The name of the service account to use.
     # If not set and create is true, a name is generated using the fullname template
-    name: "eck-config-operator-controller-manager"
+    name: "elastic-config-operator-controller-manager"
 
   podAnnotations: {}
 

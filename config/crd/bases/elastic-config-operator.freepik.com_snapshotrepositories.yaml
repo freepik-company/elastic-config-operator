@@ -4,32 +4,28 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: indexstatemanagements.eck-config-operator.freepik.com
+  name: snapshotrepositories.elastic-config-operator.freepik.com
 spec:
-  group: eck-config-operator.freepik.com
+  group: elastic-config-operator.freepik.com
   names:
-    kind: IndexStateManagement
-    listKind: IndexStateManagementList
-    plural: indexstatemanagements
-    singular: indexstatemanagement
+    kind: SnapshotRepository
+    listKind: SnapshotRepositoryList
+    plural: snapshotrepositories
+    singular: snapshotrepository
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - description: Current phase of the IndexStateManagement
-      jsonPath: .status.phase
+    - jsonPath: .status.phase
       name: Phase
       type: string
-    - description: Target cluster
-      jsonPath: .status.targetCluster
+    - jsonPath: .status.targetCluster
       name: Cluster
       type: string
-    - description: Detailed status message
-      jsonPath: .status.message
+    - jsonPath: .status.message
       name: Message
       priority: 1
       type: string
-    - description: Last successful synchronization time
-      jsonPath: .status.lastSyncTime
+    - jsonPath: .status.lastSyncTime
       name: Last Sync
       type: date
     - jsonPath: .metadata.creationTimestamp
@@ -38,9 +34,8 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: |-
-          IndexStateManagement is the Schema for the indexstatemanagements API
-          This resource is specifically for OpenSearch clusters (ISM API)
+        description: SnapshotRepository is the Schema for the snapshotrepositories
+          API
         properties:
           apiVersion:
             description: |-
@@ -60,11 +55,11 @@ spec:
           metadata:
             type: object
           spec:
-            description: spec defines the desired state of IndexStateManagement
+            description: spec defines the desired state of SnapshotRepository
             properties:
               resourceSelector:
-                description: ResourceSelector specifies the target OpenSearch cluster
-                  for ISM policies
+                description: ResourceSelector defines how to select and connect to
+                  an Elasticsearch cluster
                 properties:
                   caCertSecretRef:
                     description: CACertSecretRef references a Secret containing the
@@ -131,33 +126,36 @@ spec:
               resources:
                 additionalProperties:
                   x-kubernetes-preserve-unknown-fields: true
-                description: |-
-                  Resources contains the ISM policies to apply, keyed by policy name
-                  Each key represents a policy name, the value is the policy definition
                 type: object
               syncInterval:
-                description: |-
-                  SyncInterval defines how often the operator will reconcile this resource (default: 10s)
-                  Examples: "30s", "5m", "1h"
+                default: 10s
+                description: SyncInterval defines the interval for reconciliation
+                  (e.g., "30s", "5m"). Defaults to 10s.
                 type: string
             required:
             - resourceSelector
             - resources
             type: object
           status:
-            description: status defines the observed state of IndexStateManagement
+            description: status defines the observed state of SnapshotRepository
             properties:
               appliedResources:
-                description: |-
-                  AppliedResources lists the names of the policies that were successfully applied to OpenSearch.
-                  This is used to track which policies need to be deleted if they are removed from the spec.
+                description: AppliedResources is a list of resource names that have
+                  been successfully applied to Elasticsearch
                 items:
                   type: string
                 type: array
               conditions:
                 description: |-
-                  conditions represent the current state of the IndexStateManagement resource.
+                  conditions represent the current state of the SnapshotRepository resource.
                   Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -217,22 +215,22 @@ spec:
                 - type
                 x-kubernetes-list-type: map
               lastSyncTime:
-                description: LastSyncTime records the last time the resource was successfully
-                  synchronized with OpenSearch.
+                description: LastSyncTime is the timestamp of the last successful
+                  synchronization with Elasticsearch
                 format: date-time
                 type: string
               message:
-                description: Message provides a human-readable message about the current
-                  status.
+                description: Message provides additional information about the current
+                  phase
                 type: string
               phase:
                 description: |-
-                  Phase indicates the current phase of the IndexStateManagement.
-                  It can be "Pending", "Syncing", "Ready", or "Error".
+                  Phase represents the current phase of the SnapshotRepository
+                  Possible values: Pending, Syncing, Ready, Error
                 type: string
               targetCluster:
                 description: |-
-                  TargetCluster is the namespace/name of the target OpenSearch cluster
+                  TargetCluster is the namespace/name of the target Elasticsearch cluster
                   Format: "namespace/name"
                 type: string
             type: object

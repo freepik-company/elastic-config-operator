@@ -1,8 +1,8 @@
-apiVersion: eck-config-operator.freepik.com/v1alpha1
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
 kind: IndexTemplate
 metadata:
   labels:
-    app.kubernetes.io/name: eck-config-operator
+    app.kubernetes.io/name: elastic-config-operator
     app.kubernetes.io/managed-by: kustomize
   name: indextemplate-sample
 spec:

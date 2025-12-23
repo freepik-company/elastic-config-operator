@@ -49,5 +49,5 @@ const (
 	MissingCertsMessage                    = "missing certificates in secret %s"
 
 	// Finalizer
-	ResourceFinalizer = "eck-config-operator.freepik.com/finalizer"
+	ResourceFinalizer = "elastic-config-operator.freepik.com/finalizer"
 )

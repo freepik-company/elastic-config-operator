@@ -39,6 +39,6 @@ jobs:
           config: .github/chart-releaser-config.yaml
         env:
           CR_OWNER: "$GITHUB_REPOSITORY_OWNER"
-          CR_GIT_REPO: eck-config-operator
+          CR_GIT_REPO: elastic-config-operator
           CR_SKIP_EXISTING: true
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
