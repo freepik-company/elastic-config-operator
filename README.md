@@ -314,7 +314,7 @@ spec:
   syncInterval: "5m"  # Accepts: "10s", "30s", "1m", "5m", "1h", etc.
 ```
 
-Default: `10s`
+Default: `1m`
 
 ## Elasticsearch vs OpenSearch
 
