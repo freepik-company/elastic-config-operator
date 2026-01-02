@@ -56,9 +56,9 @@ resources:
 Add the Helm repository and install:
 
 ```bash
-helm repo add freepik https://freepik-company.github.io/helm-charts/
+helm repo add elastic-config-operator https://freepik-company.github.io/elastic-config-operator/
 helm repo update
-helm install elastic-config-operator freepik/elastic-config-operator \
+helm install elastic-config-operator elastic-config-operator/elastic-config-operator \
   --namespace elastic-config-operator \
   --create-namespace
 ```
@@ -66,7 +66,7 @@ helm install elastic-config-operator freepik/elastic-config-operator \
 For production deployments with namespace-specific RBAC:
 
 ```bash
-helm install elastic-config-operator freepik/elastic-config-operator \
+helm install elastic-config-operator elastic-config-operator/elastic-config-operator \
   --namespace elastic-config-operator \
   --create-namespace \
   --set rbac.secretAccess.enabled=true \
