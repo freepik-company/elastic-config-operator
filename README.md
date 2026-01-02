@@ -1,23 +1,31 @@
 # Elastic Config Operator
+### 🚀 Manage Your Elasticsearch/OpenSearch Config Like a Pro!
+
+<img src="https://raw.githubusercontent.com/freepik-company/elastic-config-operator/master/docs/img/logo.png" alt="Elastic Config Operator Logo." width="150">
+
+![GitHub Release](https://img.shields.io/github/v/release/freepik-company/elastic-config-operator)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/freepik-company/elastic-config-operator)
+[![Go Report Card](https://goreportcard.com/badge/github.com/freepik-company/elastic-config-operator)](https://goreportcard.com/report/github.com/freepik-company/elastic-config-operator)
+![GitHub License](https://img.shields.io/github/license/freepik-company/elastic-config-operator)
 
 A Kubernetes operator to manage Elasticsearch and OpenSearch configuration (ILM/ISM policies, Index Templates, Snapshot Lifecycle Policies, Snapshot Repositories, and Cluster Settings) as Kubernetes Custom Resources.
 
 ## Overview
 
-The Elastic Config Operator simplifies the management of Elasticsearch and OpenSearch configuration by allowing you to define and manage resources declaratively using Kubernetes Custom Resources. It works seamlessly with [Elastic Cloud on Kubernetes (ECK)](https://www.elastic.co/guide/en/cloud-on-k8s/current/index.html) or any standalone Elasticsearch/OpenSearch cluster.
+The Elastic Config Operator enables declarative management of Elasticsearch and OpenSearch configuration through Kubernetes Custom Resources. It provides automated lifecycle management for ILM/ISM policies, Index Templates, Snapshot configurations, and Cluster Settings.
 
-### Features
+### Key Features
 
-- ✅ **Declarative Configuration**: Manage Elasticsearch configuration as Kubernetes resources
-- ✅ **Automatic ECK Integration**: Automatically discovers Elasticsearch endpoints and credentials from ECK
-- ✅ **Manual Configuration Support**: Connect to any Elasticsearch cluster (not just ECK)
-- ✅ **Resource Tracking**: Track applied resources and detect configuration drift
-- ✅ **Automatic Cleanup**: Delete Elasticsearch resources when Kubernetes CR is deleted
-- ✅ **Status Reporting**: Rich status reporting with phases (Pending, Syncing, Ready, Error)
-- ✅ **Configurable Sync Interval**: Control how often resources are reconciled
-- ✅ **Connection Pooling**: Efficient connection reuse across reconciliations
+- **Declarative Configuration**: Define Elasticsearch/OpenSearch resources as Kubernetes manifests
+- **ECK Integration**: Automatic discovery of Elasticsearch endpoints and credentials from Elastic Cloud on Kubernetes (ECK)
+- **External Cluster Support**: Connect to any Elasticsearch/OpenSearch cluster with manual configuration
+- **Resource Tracking**: Automatic detection and cleanup of configuration drift
+- **Status Reporting**: Detailed phase tracking (Pending, Syncing, Ready, Error) with timestamps
+- **Connection Pooling**: Efficient reuse of HTTP connections across reconciliation cycles
+- **Configurable Sync Intervals**: Per-resource control of reconciliation frequency
+- **Dual Platform Support**: Compatible with both Elasticsearch and OpenSearch
 
-### Supported Resources
+## Supported Resources
 
 | Custom Resource | Elasticsearch API | OpenSearch API | Notes |
 |----------------|-------------------|----------------|-------|
@@ -28,62 +36,52 @@ The Elastic Config Operator simplifies the management of Elasticsearch and OpenS
 | `SnapshotLifecyclePolicy` | ✅ Snapshot Lifecycle Management (SLM) | ✅ Snapshot Lifecycle Management (SLM) | Fully compatible |
 | `SnapshotRepository` | ✅ Snapshot Repositories | ✅ Snapshot Repositories | Fully compatible |
 
-## Getting Started
+## Deployment
 
-### Prerequisites
+The operator supports deployment via Kustomize or Helm, enabling GitOps workflows with tools like ArgoCD or FluxCD.
 
-- Kubernetes v1.11.3+
-- kubectl v1.11.3+
-- Go v1.24.6+ (for development)
-- Docker 17.03+ (for building images)
-- [Elastic Cloud on Kubernetes (ECK)](https://www.elastic.co/guide/en/cloud-on-k8s/current/k8s-install-helm.html) (recommended) or standalone Elasticsearch
+### Option 1: Using Kustomize
 
-### Installation
+Reference the desired release version in your Kustomization manifest:
 
-#### Option 1: Using Kustomize
-
-1. **Install the CRDs:**
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/<org>/elastic-config-operator/<tag>/config/crd/bases/
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- https://github.com/freepik-company/elastic-config-operator/releases/download/v0.1.0/install.yaml
 ```
 
-2. **Deploy the operator:**
+### Option 2: Using Helm
+
+Add the Helm repository and install:
 
 ```bash
-kubectl apply -k config/default
+helm repo add freepik https://freepik-company.github.io/helm-charts/
+helm repo update
+helm install elastic-config-operator freepik/elastic-config-operator \
+  --namespace elastic-config-operator \
+  --create-namespace
 ```
 
-#### Option 2: From source
-
-1. **Clone the repository:**
+For production deployments with namespace-specific RBAC:
 
 ```bash
-git clone https://github.com/<org>/elastic-config-operator.git
-cd elastic-config-operator
+helm install elastic-config-operator freepik/elastic-config-operator \
+  --namespace elastic-config-operator \
+  --create-namespace \
+  --set rbac.secretAccess.enabled=true \
+  --set rbac.secretAccess.namespaces="{elasticsearch-apps,opensearch-cluster}"
 ```
 
-2. **Install CRDs:**
+See the [Helm Chart documentation](./charts/elastic-config-operator/README.md) for detailed configuration options.
 
-```bash
-make install
-```
+## Examples
 
-3. **Deploy the operator:**
+Sample manifests for all resource types are available in the [config/samples](./config/samples) directory.
 
-```bash
-make deploy IMG=<your-registry>/elastic-config-operator:tag
-```
+### Index Lifecycle Policy (Elasticsearch)
 
-### Quick Start Example
-
-#### 1. Create an Elasticsearch cluster (using ECK)
-
-```bash
-kubectl apply -f config/samples/elasticsearch_sample.yaml
-```
-
-#### 2. Create an Index Lifecycle Policy
+Define hot-warm-cold-delete lifecycle phases for Elasticsearch indices:
 
 ```yaml
 apiVersion: elastic-config-operator.freepik.com/v1alpha1
@@ -93,8 +91,8 @@ metadata:
 spec:
   syncInterval: "30s"  # Optional, defaults to 10s
   resourceSelector:
-    name: elasticsearch  # Name of the ECK Elasticsearch resource
-    namespace: default   # Optional, defaults to resource namespace
+    name: elasticsearch  # ECK Elasticsearch resource name
+    namespace: default   # Optional, defaults to CR namespace
   resources:
     hot-warm-cold:
       policy:
@@ -122,164 +120,9 @@ spec:
               delete: {}
 ```
 
-#### 3. Check the status
+### Index State Management (OpenSearch)
 
-```bash
-kubectl get indexlifecyclepolicies
-```
-
-```
-NAME              PHASE   LAST SYNC            AGE
-my-ilm-policies   Ready   2025-12-23T11:00Z    5m
-```
-
-```bash
-kubectl describe indexlifecyclepolicy my-ilm-policies
-```
-
-## Configuration
-
-### ECK Automatic Configuration
-
-When using ECK, the operator automatically discovers:
-- Elasticsearch endpoint
-- Credentials (elastic user)
-- CA certificate
-
-```yaml
-spec:
-  resourceSelector:
-    name: elasticsearch  # ECK Elasticsearch resource name
-    namespace: default   # Optional
-```
-
-### Manual Elasticsearch Configuration
-
-For non-ECK or external Elasticsearch clusters:
-
-```yaml
-spec:
-  resourceSelector:
-    endpoint: https://my-elasticsearch.example.com:9200
-    username: elastic
-    passwordSecretRef:
-      name: es-credentials
-      namespace: default
-      key: password
-    caCertSecretRef:  # Optional, skip TLS verification if not provided
-      name: es-ca-cert
-      namespace: default
-      key: ca.crt
-```
-
-### Sync Interval
-
-Control how often the operator reconciles resources:
-
-```yaml
-spec:
-  syncInterval: "5m"  # Supports: "10s", "30s", "1m", "5m", "1h", etc.
-```
-
-## Custom Resource Examples
-
-### Index Template
-
-```yaml
-apiVersion: elastic-config-operator.freepik.com/v1alpha1
-kind: IndexTemplate
-metadata:
-  name: my-index-templates
-spec:
-  resourceSelector:
-    name: elasticsearch
-  resources:
-    logs-template:
-      index_patterns:
-        - "logs-*"
-      template:
-        settings:
-          number_of_shards: 1
-          number_of_replicas: 1
-          index.lifecycle.name: "30d-retention"
-        mappings:
-          properties:
-            "@timestamp":
-              type: date
-            message:
-              type: text
-```
-
-### Snapshot Repository
-
-```yaml
-apiVersion: elastic-config-operator.freepik.com/v1alpha1
-kind: SnapshotRepository
-metadata:
-  name: my-snapshot-repos
-spec:
-  resourceSelector:
-    name: elasticsearch
-  resources:
-    my-fs-repository:
-      type: fs
-      settings:
-        location: "/usr/share/elasticsearch/snapshots"
-        compress: true
-```
-
-### Snapshot Lifecycle Policy
-
-```yaml
-apiVersion: elastic-config-operator.freepik.com/v1alpha1
-kind: SnapshotLifecyclePolicy
-metadata:
-  name: my-slm-policies
-spec:
-  resourceSelector:
-    name: elasticsearch
-  resources:
-    daily-snapshots:
-      schedule: "0 0 1 * * ?"  # 1:00 AM daily (6-field cron format)
-      name: "<daily-snap-{now/d}>"
-      repository: my-fs-repository
-      config:
-        indices: ["*"]
-        ignore_unavailable: false
-        include_global_state: false
-      retention:
-        expire_after: "30d"
-        min_count: 5
-        max_count: 50
-```
-
-### Cluster Settings
-
-```yaml
-apiVersion: elastic-config-operator.freepik.com/v1alpha1
-kind: ClusterSettings
-metadata:
-  name: my-cluster-settings
-spec:
-  resourceSelector:
-    name: elasticsearch
-  resources:
-    # Persistent settings survive cluster restarts
-    persistent:
-      cluster.routing.allocation.cluster_concurrent_rebalance: 2
-      cluster.routing.allocation.enable: "all"
-      cluster.routing.allocation.node_concurrent_recoveries: 2
-      cluster.blocks.read_only: false
-      indices.lifecycle.poll_interval: "10m"
-    # Transient settings don't survive cluster restarts (useful for maintenance)
-    transient:
-      # Temporarily disable shard allocation during maintenance
-      cluster.routing.allocation.enable: "none"
-```
-
-### Index State Management (OpenSearch only)
-
-⚠️ **Note**: This resource is specifically for OpenSearch clusters. For Elasticsearch, use `IndexLifecyclePolicy` instead.
+Define ISM policies for OpenSearch clusters:
 
 ```yaml
 apiVersion: elastic-config-operator.freepik.com/v1alpha1
@@ -289,7 +132,7 @@ metadata:
 spec:
   resourceSelector:
     name: opensearch
-    clusterType: opensearch  # REQUIRED for OpenSearch
+    clusterType: opensearch  # Required for OpenSearch
   resources:
     hot-warm-delete:
       description: "Hot-warm-delete policy for logs"
@@ -319,162 +162,308 @@ spec:
             - delete: {}
 ```
 
-## Elasticsearch vs OpenSearch
+### Index Template
 
-The operator automatically detects the cluster type (Elasticsearch or OpenSearch) and validates that you're using the correct CRD:
+Define composable index templates with mappings and settings:
 
-- **Elasticsearch clusters**: Use `IndexLifecyclePolicy` for ILM (Index Lifecycle Management)
-- **OpenSearch clusters**: Use `IndexStateManagement` for ISM (Index State Management)
+```yaml
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
+kind: IndexTemplate
+metadata:
+  name: my-index-templates
+spec:
+  resourceSelector:
+    name: elasticsearch
+  resources:
+    logs-template:
+      index_patterns:
+        - "logs-*"
+      priority: 100
+      template:
+        settings:
+          number_of_shards: 1
+          number_of_replicas: 1
+          index:
+            lifecycle:
+              name: "30d-retention"
+              rollover_alias: "logs"
+        mappings:
+          properties:
+            "@timestamp":
+              type: date
+            message:
+              type: text
+            level:
+              type: keyword
+```
 
-All other resources (`ClusterSettings`, `IndexTemplate`, `SnapshotLifecyclePolicy`, `SnapshotRepository`) work with both Elasticsearch and OpenSearch.
+### Snapshot Repository
 
-### Manual cluster type configuration
+Configure snapshot storage backends (filesystem, S3, GCS, Azure):
+
+```yaml
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
+kind: SnapshotRepository
+metadata:
+  name: my-snapshot-repos
+spec:
+  resourceSelector:
+    name: elasticsearch
+  resources:
+    my-fs-repository:
+      type: fs
+      settings:
+        location: "/usr/share/elasticsearch/snapshots"
+        compress: true
+```
+
+### Snapshot Lifecycle Policy
+
+Automate snapshot scheduling and retention:
+
+```yaml
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
+kind: SnapshotLifecyclePolicy
+metadata:
+  name: my-slm-policies
+spec:
+  resourceSelector:
+    name: elasticsearch
+  resources:
+    daily-snapshots:
+      schedule: "0 0 1 * * ?"  # 1:00 AM daily (6-field cron format)
+      name: "<daily-snap-{now/d}>"
+      repository: my-fs-repository
+      config:
+        indices: ["*"]
+        ignore_unavailable: false
+        include_global_state: false
+      retention:
+        expire_after: "30d"
+        min_count: 5
+        max_count: 50
+```
+
+### Cluster Settings
+
+Manage persistent and transient cluster-level settings:
+
+```yaml
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
+kind: ClusterSettings
+metadata:
+  name: my-cluster-settings
+spec:
+  resourceSelector:
+    name: elasticsearch
+  resources:
+    # Persistent settings survive cluster restarts
+    persistent:
+      cluster.routing.allocation.cluster_concurrent_rebalance: 2
+      cluster.routing.allocation.enable: "all"
+      cluster.routing.allocation.node_concurrent_recoveries: 2
+      cluster.blocks.read_only: false
+      indices.lifecycle.poll_interval: "10m"
+    # Transient settings are cleared on cluster restart
+    transient:
+      cluster.routing.allocation.enable: "none"
+```
+
+## Configuration
+
+### ECK Automatic Discovery
+
+When using Elastic Cloud on Kubernetes (ECK), the operator automatically discovers:
+- Cluster endpoint URL
+- Authentication credentials (elastic user)
+- CA certificate for TLS verification
 
 ```yaml
 spec:
   resourceSelector:
-    name: my-cluster
-    clusterType: opensearch  # or "elasticsearch" - overrides auto-detection
+    name: elasticsearch  # ECK Elasticsearch resource name
+    namespace: default   # Optional, defaults to CR namespace
 ```
 
-## Status Fields
+### Manual Cluster Configuration
 
-All resources report their status:
+For non-ECK or external clusters, provide explicit connection details:
 
 ```yaml
-status:
-  phase: Ready  # Pending, Syncing, Ready, or Error
-  message: "Successfully synced 2 policies"
-  appliedResources:
+spec:
+  resourceSelector:
+    endpoint: https://my-elasticsearch.example.com:9200
+    username: elastic
+    passwordSecretRef:
+      name: es-credentials
+      namespace: default
+      key: password
+    caCertSecretRef:  # Optional, skip TLS verification if omitted
+      name: es-ca-cert
+      namespace: default
+      key: ca.crt
+    clusterType: elasticsearch  # or "opensearch"
+```
+
+### Reconciliation Interval
+
+Configure per-resource reconciliation frequency:
+
+```yaml
+spec:
+  syncInterval: "5m"  # Accepts: "10s", "30s", "1m", "5m", "1h", etc.
+```
+
+Default: `10s`
+
+## Elasticsearch vs OpenSearch
+
+The operator automatically detects cluster type and validates CRD compatibility:
+
+- **Elasticsearch**: Use `IndexLifecyclePolicy` for ILM
+- **OpenSearch**: Use `IndexStateManagement` for ISM
+
+All other resource types (`ClusterSettings`, `IndexTemplate`, `SnapshotLifecyclePolicy`, `SnapshotRepository`) are compatible with both platforms.
+
+## Status Monitoring
+
+View resource status with standard kubectl commands:
+
+```bash
+kubectl get indexlifecyclepolicies
+```
+
+```
+NAME              PHASE   CLUSTER                      LAST SYNC            AGE
+my-ilm-policies   Ready   default/elasticsearch        2025-01-02T11:00Z    5m
+```
+
+Detailed status information:
+
+```bash
+kubectl describe indexlifecyclepolicy my-ilm-policies
+```
+
+```yaml
+Status:
+  Phase: Ready
+  Message: Successfully synced 2 policies
+  Applied Resources:
     - hot-warm-cold
     - delete-after-30d
-  lastSyncTime: "2025-12-23T11:00:00Z"
+  Last Sync Time: 2025-01-02T11:00:00Z
+  Target Cluster: default/elasticsearch
+```
+
+## Architecture
+
+### Connection Management
+
+The operator maintains a connection pool indexed by `<namespace>_<cluster-name>`. Connections feature:
+- 10-second request timeout
+- Persistent HTTP keep-alive
+- Automatic TLS certificate verification
+- Credential refresh on secret changes
+
+### Reconciliation Flow
+
+1. **Watch**: Observe Custom Resource changes
+2. **Status Update**: Set phase to "Syncing"
+3. **Connect**: Retrieve or create cluster connection from pool
+4. **Detect Type**: Identify Elasticsearch vs OpenSearch
+5. **Compare**: Diff desired state (CR spec) against applied state (CR status)
+6. **Cleanup**: Remove resources deleted from CR spec
+7. **Apply**: Synchronize all resources in CR spec to cluster
+8. **Update Status**: Set phase to "Ready" with applied resource list and timestamp
+
+### Resource Lifecycle
+
+```
+CR Created → Phase: Pending
+    ↓
+Connecting → Phase: Syncing
+    ↓
+Applying   → Phase: Syncing
+    ↓
+Success    → Phase: Ready
+    ↓
+Modified   → Re-reconcile
+    ↓
+Deleted    → Cleanup from cluster
 ```
 
 ## Development
 
 ### Prerequisites
 
+- Kubebuilder v4.0.0+
 - Go 1.24.6+
-- Docker
-- kubectl
-- kind or minikube (for local testing)
+- Docker 17.03+
+- kubectl 1.11.3+
+- Kubernetes cluster (v1.11.3+)
 
-### Local Development Setup
+### Local Development
 
-1. **Install ECK and Elasticsearch:**
+Create a local Kubernetes cluster (using Kind or Minikube):
 
 ```bash
-make install-eck
-make install-elasticsearch
+kind create cluster
 ```
 
-2. **Setup local development environment:**
+Install CRDs and run the operator locally:
 
 ```bash
-make setup-local-dev
+make install run
 ```
 
-This will:
-- Add Elasticsearch service to `/etc/hosts`
-- Forward Elasticsearch port to localhost:9200
-
-3. **Run the operator locally:**
+Apply sample resources:
 
 ```bash
-make run
+kubectl apply -k config/samples/
 ```
 
-4. **Cleanup:**
+### Building and Testing
 
 ```bash
-make cleanup-local-dev
-```
-
-### Building
-
-```bash
-# Build the operator
-make build
-
-# Build and push Docker image
-make docker-build docker-push IMG=<registry>/elastic-config-operator:tag
-
-# Deploy to cluster
-make deploy IMG=<registry>/elastic-config-operator:tag
-```
-
-### Testing
-
-```bash
-# Run unit tests
+# Run tests
 make test
 
-# Run with coverage
-make test-coverage
+# Build binary
+make build
 
-# Apply sample resources
-kubectl apply -f config/samples/
+# Build and push container image
+export VERSION="0.1.0"
+export IMG="ghcr.io/freepik-company/elastic-config-operator:v$VERSION"
+make docker-build docker-push
+
+# Deploy to cluster
+make deploy IMG=$IMG
 ```
 
-## RBAC Permissions
+## RBAC Requirements
 
-The operator requires the following permissions:
+The operator requires the following Kubernetes permissions:
 
-| Resource | Verbs | Reason |
-|----------|-------|--------|
-| `secrets` | get, list, watch | Read Elasticsearch credentials and CA certificates |
-| `elasticsearches.elasticsearch.k8s.elastic.co` | get, list, watch | Discover ECK Elasticsearch resources |
-| `indexlifecyclepolicies.elastic-config-operator.freepik.com` | * | Manage ILM policy CRs |
+| Resource | Verbs | Purpose |
+|----------|-------|---------|
+| `secrets` | get, list, watch | Read cluster credentials and TLS certificates |
+| `elasticsearches.elasticsearch.k8s.elastic.co` | get, list, watch | Discover ECK-managed Elasticsearch clusters |
+| `indexlifecyclepolicies.elastic-config-operator.freepik.com` | * | Manage ILM CRs |
+| `indexstatemanagements.elastic-config-operator.freepik.com` | * | Manage ISM CRs |
 | `indextemplates.elastic-config-operator.freepik.com` | * | Manage Index Template CRs |
-| `snapshotlifecyclepolicies.elastic-config-operator.freepik.com` | * | Manage SLM policy CRs |
+| `snapshotlifecyclepolicies.elastic-config-operator.freepik.com` | * | Manage SLM CRs |
 | `snapshotrepositories.elastic-config-operator.freepik.com` | * | Manage Snapshot Repository CRs |
-
-## Architecture
-
-### Connection Management
-
-The operator maintains a connection pool to Elasticsearch clusters. Connections are:
-- Created on first use
-- Cached with a key of `<namespace>_<cluster-name>`
-- Reused across reconciliation loops
-- Include 10-second timeouts for reliability
-
-### Reconciliation Flow
-
-1. **Watch**: Operator watches for CR changes
-2. **Sync Status**: Update status to "Syncing"
-3. **Connect**: Get or create Elasticsearch connection
-4. **Compare**: Compare desired state (CR) with actual state (Status)
-5. **Delete**: Remove resources no longer in CR
-6. **Apply**: Apply all desired resources (idempotent)
-7. **Update Status**: Set status to "Ready" with applied resources
-
-### Resource Lifecycle
-
-```
-CR Created → Status: Pending
-           ↓
-    Connecting to ES → Status: Syncing
-           ↓
-    Applying Config → Status: Syncing
-           ↓
-    Success → Status: Ready
-           ↓
-    CR Modified → Re-sync
-           ↓
-    CR Deleted → Delete from ES
-```
+| `clustersettings.elastic-config-operator.freepik.com` | * | Manage Cluster Settings CRs |
 
 ## Troubleshooting
 
-### Operator logs
+### View Operator Logs
 
 ```bash
-kubectl logs -n elastic-config-operator-system deployment/elastic-config-operator-controller-manager -f
+kubectl logs -n elastic-config-operator deployment/elastic-config-operator-controller-manager -f
 ```
 
-### Check resource status
+### Inspect Resource Status
 
 ```bash
 kubectl describe indexlifecyclepolicy <name>
@@ -482,28 +471,76 @@ kubectl describe indexlifecyclepolicy <name>
 
 ### Common Issues
 
-**Error: "failed to connect to Elasticsearch"**
-- Verify Elasticsearch is running: `kubectl get elasticsearch`
-- Check credentials secret exists
-- Verify network connectivity
+**Connection Failures**
+```
+Error: failed to connect to Elasticsearch
+```
+- Verify cluster is running: `kubectl get elasticsearch`
+- Check secret exists and contains valid credentials
+- Verify network connectivity and firewall rules
 
-**Error: "unknown field 'config'"**
-- For SLM policies, use 6-field cron format: `0 0 1 * * ?`
-- Verify JSON structure matches Elasticsearch API
+**Cluster Type Mismatch**
+```
+Error: OpenSearch clusters use ISM instead of ILM
+```
+- Use `IndexStateManagement` for OpenSearch clusters
+- Use `IndexLifecyclePolicy` for Elasticsearch clusters
 
-**Status stuck in "Syncing"**
-- Check operator logs for errors
-- Verify Elasticsearch is accessible
-- Check timeout settings (default 10s)
+**SLM Cron Format**
+```
+Error: invalid schedule: must be a valid cron expression
+```
+- Elasticsearch SLM requires 6-field cron format (includes seconds)
+- Example: `0 0 1 * * ?` (1:00 AM daily)
+
+**Status Stuck in Syncing**
+- Check operator logs for detailed error messages
+- Verify cluster accessibility and authentication
+- Review timeout settings (default: 10s per request)
+
+**TLS Certificate Verification**
+```
+Error: tls: failed to verify certificate
+```
+- Ensure `caCertSecretRef` is correctly configured
+- For ECK, verify CR namespace matches cluster namespace
+- Check certificate SANs match the endpoint hostname
+
+## Release Process
+
+1. Run test suite:
+   ```bash
+   make test
+   ```
+
+2. Set version and image:
+   ```bash
+   export VERSION="0.1.0"
+   export IMG="ghcr.io/freepik-company/elastic-config-operator:v$VERSION"
+   ```
+
+3. Build and push image:
+   ```bash
+   make docker-build docker-push
+   ```
+
+4. Generate installation manifests:
+   ```bash
+   make build-installer
+   ```
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+This project is built with [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder). Contributions are welcome via pull requests. All submissions require:
+
+- Passing test suite (`make test`)
+- Code review approval
+- Adherence to Go best practices
+- Clear commit messages describing changes
 
 ## Maintainers
 
 - [Daniel Fradejas](https://github.com/dfradehubs) - fradejasdaniel@gmail.com
-
 
 ## License
 
