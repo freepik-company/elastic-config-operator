@@ -11,7 +11,7 @@ const (
 	IndexStateManagementResourceType    = "IndexStateManagement"
 
 	// Sync interval to check if the resources are up to date
-	DefaultSyncInterval = "10s"
+	DefaultSyncInterval = "1m"
 
 	// Resource phases
 	PhasePending = "Pending"

@@ -7,8 +7,8 @@ description: >-
   A Kubernetes operator to manage Elasticsearch and OpenSearch configuration 
   (ILM/ISM policies, Index Templates, Snapshot Lifecycle Policies, 
   Snapshot Repositories, and Cluster Settings) as Kubernetes Custom Resources.
-version: 1.0.0 # chart version
-appVersion: "1.0.0" # elastic-config-operator version
+version: 0.0.1 # chart version
+appVersion: "0.0.1" # elastic-config-operator version
 kubeVersion: ">=1.11.3-0" # kubernetes version
 home: https://github.com/freepik-company/elastic-config-operator
 sources:

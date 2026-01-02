@@ -500,6 +500,11 @@ kubectl describe indexlifecyclepolicy <name>
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Maintainers
+
+- [Daniel Fradejas](https://github.com/dfradehubs) - fradejasdaniel@gmail.com
+
+
 ## License
 
 Copyright 2025.
