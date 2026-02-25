@@ -173,8 +173,12 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
 		tlsConfig = &tls.Config{
-			RootCAs:      caCertPool,
-			Certificates: clientCertificates,
+			RootCAs:            caCertPool,
+			Certificates:       clientCertificates,
+			InsecureSkipVerify: resourceSelector.SkipTLSVerify,
+		}
+		if resourceSelector.SkipTLSVerify {
+			logger.Info("TLS hostname verification disabled (skipTLSVerify: true)")
 		}
 	} else {
 		tlsConfig = &tls.Config{

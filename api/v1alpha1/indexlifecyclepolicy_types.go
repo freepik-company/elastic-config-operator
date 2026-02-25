@@ -88,6 +88,12 @@ type ResourceSelector struct {
 	// +optional
 	CertificatesSecretRef *CertificatesSecretRef `json:"certificatesSecretRef,omitempty"`
 
+	// SkipTLSVerify disables TLS certificate hostname verification.
+	// Useful when the server certificate does not include the endpoint hostname in its SANs.
+	// The CA certificate is still used to verify the server certificate signature when provided.
+	// +optional
+	SkipTLSVerify bool `json:"skipTLSVerify,omitempty"`
+
 	// ClusterType specifies the type of cluster: "elasticsearch" or "opensearch"
 	// If not specified, the operator will automatically detect the cluster type
 	// +optional

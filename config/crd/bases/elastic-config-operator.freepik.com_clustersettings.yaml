@@ -148,6 +148,12 @@ spec:
                     - key
                     - name
                     type: object
+                  skipTLSVerify:
+                    description: |-
+                      SkipTLSVerify disables TLS certificate hostname verification.
+                      Useful when the server certificate does not include the endpoint hostname in its SANs.
+                      The CA certificate is still used to verify the server certificate signature when provided.
+                    type: boolean
                   username:
                     description: Username for Elasticsearch authentication
                     type: string
