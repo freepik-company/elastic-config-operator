@@ -79,6 +79,34 @@ spec:
                     - key
                     - name
                     type: object
+                  certificatesSecretRef:
+                    description: |-
+                      CertificatesSecretRef references a Secret containing client certificates for mTLS authentication.
+                      When provided, certificate-based authentication is used instead of username/password.
+                      The secret must contain the CA certificate, client certificate, and client private key.
+                    properties:
+                      keyCA:
+                        description: Key for the CA certificate in the secret
+                        type: string
+                      keyCert:
+                        description: Key for the client certificate in the secret
+                        type: string
+                      keyKey:
+                        description: Key for the client private key in the secret
+                        type: string
+                      name:
+                        description: Name of the secret containing certificates
+                        type: string
+                      namespace:
+                        description: Namespace of the secret (defaults to the same
+                          namespace as this resource)
+                        type: string
+                    required:
+                    - keyCA
+                    - keyCert
+                    - keyKey
+                    - name
+                    type: object
                   clusterType:
                     description: |-
                       ClusterType specifies the type of cluster: "elasticsearch" or "opensearch"

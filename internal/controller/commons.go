@@ -3,12 +3,14 @@ package controller
 const (
 
 	// Resource types
-	IndexLifecyclePolicyResourceType    = "IndexLifecyclePolicy"
-	IndexTemplateResourceType           = "IndexTemplate"
-	SnapshotRepositoryResourceType      = "SnapshotRepository"
-	SnapshotLifecyclePolicyResourceType = "SnapshotLifecyclePolicy"
-	ClusterSettingsResourceType         = "ClusterSettings"
-	IndexStateManagementResourceType    = "IndexStateManagement"
+	IndexLifecyclePolicyResourceType     = "IndexLifecyclePolicy"
+	IndexTemplateResourceType            = "IndexTemplate"
+	ComponentTemplateResourceType        = "ComponentTemplate"
+	SnapshotRepositoryResourceType       = "SnapshotRepository"
+	SnapshotLifecyclePolicyResourceType  = "SnapshotLifecyclePolicy"
+	SnapshotManagementPolicyResourceType = "SnapshotManagementPolicy"
+	ClusterSettingsResourceType          = "ClusterSettings"
+	IndexStateManagementResourceType     = "IndexStateManagement"
 
 	// Sync interval to check if the resources are up to date
 	DefaultSyncInterval = "1m"

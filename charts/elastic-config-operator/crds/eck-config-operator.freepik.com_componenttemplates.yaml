@@ -4,14 +4,14 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.19.0
-  name: snapshotrepositories.elastic-config-operator.freepik.com
+  name: componenttemplates.elastic-config-operator.freepik.com
 spec:
   group: elastic-config-operator.freepik.com
   names:
-    kind: SnapshotRepository
-    listKind: SnapshotRepositoryList
-    plural: snapshotrepositories
-    singular: snapshotrepository
+    kind: ComponentTemplate
+    listKind: ComponentTemplateList
+    plural: componenttemplates
+    singular: componenttemplate
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -34,8 +34,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: SnapshotRepository is the Schema for the snapshotrepositories
-          API
+        description: ComponentTemplate is the Schema for the componenttemplates API
         properties:
           apiVersion:
             description: |-
@@ -55,7 +54,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: spec defines the desired state of SnapshotRepository
+            description: spec defines the desired state of ComponentTemplate
             properties:
               resourceSelector:
                 description: ResourceSelector defines how to select and connect to
@@ -165,7 +164,7 @@ spec:
             - resources
             type: object
           status:
-            description: status defines the observed state of SnapshotRepository
+            description: status defines the observed state of ComponentTemplate
             properties:
               appliedResources:
                 description: AppliedResources is a list of resource names that have
@@ -174,16 +173,8 @@ spec:
                   type: string
                 type: array
               conditions:
-                description: |-
-                  conditions represent the current state of the SnapshotRepository resource.
-                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
-
-                  Standard condition types include:
-                  - "Available": the resource is fully functional
-                  - "Progressing": the resource is being created or updated
-                  - "Degraded": the resource failed to reach or maintain its desired state
-
-                  The status of each condition is one of True, False, or Unknown.
+                description: conditions represent the current state of the ComponentTemplate
+                  resource.
                 items:
                   description: Condition contains details for one aspect of the current
                     state of this API Resource.
@@ -253,7 +244,7 @@ spec:
                 type: string
               phase:
                 description: |-
-                  Phase represents the current phase of the SnapshotRepository
+                  Phase represents the current phase of the ComponentTemplate
                   Possible values: Pending, Syncing, Ready, Error
                 type: string
               targetCluster:

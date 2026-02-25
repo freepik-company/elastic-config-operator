@@ -16,10 +16,12 @@ rules:
   - elastic-config-operator.freepik.com
   resources:
   - clustersettings
+  - componenttemplates
   - indexlifecyclepolicies
   - indexstatemanagements
   - indextemplates
   - snapshotlifecyclepolicies
+  - snapshotmanagementpolicies
   - snapshotrepositories
   verbs:
   - create
@@ -33,10 +35,12 @@ rules:
   - elastic-config-operator.freepik.com
   resources:
   - clustersettings/finalizers
+  - componenttemplates/finalizers
   - indexlifecyclepolicies/finalizers
   - indexstatemanagements/finalizers
   - indextemplates/finalizers
   - snapshotlifecyclepolicies/finalizers
+  - snapshotmanagementpolicies/finalizers
   - snapshotrepositories/finalizers
   verbs:
   - update
@@ -44,10 +48,12 @@ rules:
   - elastic-config-operator.freepik.com
   resources:
   - clustersettings/status
+  - componenttemplates/status
   - indexlifecyclepolicies/status
   - indexstatemanagements/status
   - indextemplates/status
   - snapshotlifecyclepolicies/status
+  - snapshotmanagementpolicies/status
   - snapshotrepositories/status
   verbs:
   - get

@@ -45,6 +45,21 @@ type SecretKeySelector struct {
 	Key string `json:"key"`
 }
 
+// CertificatesSecretRef references a Secret containing client certificates for mTLS authentication
+type CertificatesSecretRef struct {
+	// Name of the secret containing certificates
+	Name string `json:"name"`
+	// Namespace of the secret (defaults to the same namespace as this resource)
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+	// Key for the CA certificate in the secret
+	KeyCA string `json:"keyCA"`
+	// Key for the client certificate in the secret
+	KeyCert string `json:"keyCert"`
+	// Key for the client private key in the secret
+	KeyKey string `json:"keyKey"`
+}
+
 // ResourceSelector defines how to select and connect to an Elasticsearch cluster
 type ResourceSelector struct {
 	// Name of the Elasticsearch resource (ECK cluster name)
@@ -66,6 +81,13 @@ type ResourceSelector struct {
 	// CACertSecretRef references a Secret containing the CA certificate
 	// +optional
 	CACertSecretRef *SecretKeySelector `json:"caCertSecretRef,omitempty"`
+
+	// CertificatesSecretRef references a Secret containing client certificates for mTLS authentication.
+	// When provided, certificate-based authentication is used instead of username/password.
+	// The secret must contain the CA certificate, client certificate, and client private key.
+	// +optional
+	CertificatesSecretRef *CertificatesSecretRef `json:"certificatesSecretRef,omitempty"`
+
 	// ClusterType specifies the type of cluster: "elasticsearch" or "opensearch"
 	// If not specified, the operator will automatically detect the cluster type
 	// +optional

@@ -8,11 +8,11 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/freepik-company/elastic-config-operator)](https://goreportcard.com/report/github.com/freepik-company/elastic-config-operator)
 ![GitHub License](https://img.shields.io/github/license/freepik-company/elastic-config-operator)
 
-A Kubernetes operator to manage Elasticsearch and OpenSearch configuration (ILM/ISM policies, Index Templates, Snapshot Lifecycle Policies, Snapshot Repositories, and Cluster Settings) as Kubernetes Custom Resources.
+A Kubernetes operator to manage Elasticsearch and OpenSearch configuration (ILM/ISM policies, Index/Component Templates, Snapshot Lifecycle/Management Policies, Snapshot Repositories, and Cluster Settings) as Kubernetes Custom Resources.
 
 ## Overview
 
-The Elastic Config Operator enables declarative management of Elasticsearch and OpenSearch configuration through Kubernetes Custom Resources. It provides automated lifecycle management for ILM/ISM policies, Index Templates, Snapshot configurations, and Cluster Settings.
+The Elastic Config Operator enables declarative management of Elasticsearch and OpenSearch configuration through Kubernetes Custom Resources. It provides automated lifecycle management for ILM/ISM policies, Index/Component Templates, Snapshot configurations, and Cluster Settings.
 
 ### Key Features
 
@@ -24,16 +24,19 @@ The Elastic Config Operator enables declarative management of Elasticsearch and 
 - **Connection Pooling**: Efficient reuse of HTTP connections across reconciliation cycles
 - **Configurable Sync Intervals**: Per-resource control of reconciliation frequency
 - **Dual Platform Support**: Compatible with both Elasticsearch and OpenSearch
+- **mTLS Authentication**: Support for certificate-based client authentication (mTLS) alongside username/password
 
 ## Supported Resources
 
 | Custom Resource | Elasticsearch API | OpenSearch API | Notes |
 |----------------|-------------------|----------------|-------|
 | `ClusterSettings` | ✅ Cluster Settings | ✅ Cluster Settings | Fully compatible |
+| `ComponentTemplate` | ✅ Component Templates | ✅ Component Templates | Fully compatible |
 | `IndexLifecyclePolicy` | ✅ Index Lifecycle Management (ILM) | ❌ Not supported | Elasticsearch only |
 | `IndexStateManagement` | ❌ Not supported | ✅ Index State Management (ISM) | OpenSearch only |
 | `IndexTemplate` | ✅ Index Templates | ✅ Index Templates | Fully compatible |
-| `SnapshotLifecyclePolicy` | ✅ Snapshot Lifecycle Management (SLM) | ✅ Snapshot Lifecycle Management (SLM) | Fully compatible |
+| `SnapshotLifecyclePolicy` | ✅ Snapshot Lifecycle Management (SLM) | ❌ Not supported | Elasticsearch only |
+| `SnapshotManagementPolicy` | ❌ Not supported | ✅ Snapshot Management (SM) | OpenSearch only |
 | `SnapshotRepository` | ✅ Snapshot Repositories | ✅ Snapshot Repositories | Fully compatible |
 
 ## Deployment
@@ -162,6 +165,43 @@ spec:
             - delete: {}
 ```
 
+### Component Template
+
+Define reusable component templates for composable index templates:
+
+```yaml
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
+kind: ComponentTemplate
+metadata:
+  name: my-component-templates
+spec:
+  resourceSelector:
+    name: opensearch
+    endpoint: https://opensearch.example.com:9200
+    clusterType: opensearch
+    certificatesSecretRef:
+      name: opensearch-certificates
+      keyCA: ca.crt
+      keyCert: client-tls.crt
+      keyKey: client-tls.key
+  resources:
+    logs-mappings:
+      template:
+        mappings:
+          properties:
+            "@timestamp":
+              type: date
+            message:
+              type: text
+            level:
+              type: keyword
+    logs-settings:
+      template:
+        settings:
+          number_of_shards: 1
+          number_of_replicas: 1
+```
+
 ### Index Template
 
 Define composable index templates with mappings and settings:
@@ -244,6 +284,50 @@ spec:
         max_count: 50
 ```
 
+### Snapshot Management Policy (OpenSearch)
+
+Automate snapshot scheduling for OpenSearch clusters using the SM API:
+
+```yaml
+apiVersion: elastic-config-operator.freepik.com/v1alpha1
+kind: SnapshotManagementPolicy
+metadata:
+  name: my-sm-policies
+spec:
+  resourceSelector:
+    name: opensearch
+    endpoint: https://opensearch.example.com:9200
+    clusterType: opensearch
+    certificatesSecretRef:
+      name: opensearch-certificates
+      keyCA: ca.crt
+      keyCert: client-tls.crt
+      keyKey: client-tls.key
+  resources:
+    daily-snapshots:
+      description: "Daily snapshot policy"
+      creation:
+        schedule:
+          cron:
+            expression: "0 1 * * *"
+            timezone: "UTC"
+        time_limit: "1h"
+      snapshot_config:
+        repository: my-gcs-repository
+        indices: "*"
+        ignore_unavailable: true
+      deletion:
+        schedule:
+          cron:
+            expression: "0 2 * * *"
+            timezone: "UTC"
+        condition:
+          max_age: "30d"
+          max_count: 50
+          min_count: 5
+        time_limit: "1h"
+```
+
 ### Cluster Settings
 
 Manage persistent and transient cluster-level settings:
@@ -285,13 +369,14 @@ spec:
     namespace: default   # Optional, defaults to CR namespace
 ```
 
-### Manual Cluster Configuration
+### Manual Cluster Configuration (Username/Password)
 
-For non-ECK or external clusters, provide explicit connection details:
+For non-ECK or external clusters with basic authentication:
 
 ```yaml
 spec:
   resourceSelector:
+    name: my-cluster
     endpoint: https://my-elasticsearch.example.com:9200
     username: elastic
     passwordSecretRef:
@@ -304,6 +389,25 @@ spec:
       key: ca.crt
     clusterType: elasticsearch  # or "opensearch"
 ```
+
+### Manual Cluster Configuration (mTLS Certificates)
+
+For clusters using certificate-based authentication (mTLS). The secret must contain the CA certificate, client certificate, and client private key:
+
+```yaml
+spec:
+  resourceSelector:
+    name: my-cluster
+    endpoint: https://opensearch.example.com:9200
+    clusterType: opensearch
+    certificatesSecretRef:
+      name: opensearch-certificates  # Secret containing all certificates
+      keyCA: ca.crt                  # Key for CA certificate
+      keyCert: client-tls.crt        # Key for client certificate
+      keyKey: client-tls.key         # Key for client private key
+```
+
+When `certificatesSecretRef` is provided, the operator uses mTLS authentication instead of username/password. This is common for OpenSearch clusters secured with certificate-based authentication.
 
 ### Reconciliation Interval
 
@@ -323,7 +427,11 @@ The operator automatically detects cluster type and validates CRD compatibility:
 - **Elasticsearch**: Use `IndexLifecyclePolicy` for ILM
 - **OpenSearch**: Use `IndexStateManagement` for ISM
 
-All other resource types (`ClusterSettings`, `IndexTemplate`, `SnapshotLifecyclePolicy`, `SnapshotRepository`) are compatible with both platforms.
+Platform-specific resources:
+- **OpenSearch only**: `IndexStateManagement` (ISM), `SnapshotManagementPolicy` (SM)
+- **Elasticsearch only**: `IndexLifecyclePolicy` (ILM), `SnapshotLifecyclePolicy` (SLM)
+
+All other resource types (`ClusterSettings`, `ComponentTemplate`, `IndexTemplate`, `SnapshotRepository`) are compatible with both platforms.
 
 ## Status Monitoring
 
@@ -363,6 +471,7 @@ The operator maintains a connection pool indexed by `<namespace>_<cluster-name>`
 - 10-second request timeout
 - Persistent HTTP keep-alive
 - Automatic TLS certificate verification
+- mTLS client certificate authentication support
 - Credential refresh on secret changes
 
 ### Reconciliation Flow
@@ -448,12 +557,14 @@ The operator requires the following Kubernetes permissions:
 |----------|-------|---------|
 | `secrets` | get, list, watch | Read cluster credentials and TLS certificates |
 | `elasticsearches.elasticsearch.k8s.elastic.co` | get, list, watch | Discover ECK-managed Elasticsearch clusters |
+| `clustersettings.elastic-config-operator.freepik.com` | * | Manage Cluster Settings CRs |
+| `componenttemplates.elastic-config-operator.freepik.com` | * | Manage Component Template CRs |
 | `indexlifecyclepolicies.elastic-config-operator.freepik.com` | * | Manage ILM CRs |
 | `indexstatemanagements.elastic-config-operator.freepik.com` | * | Manage ISM CRs |
 | `indextemplates.elastic-config-operator.freepik.com` | * | Manage Index Template CRs |
 | `snapshotlifecyclepolicies.elastic-config-operator.freepik.com` | * | Manage SLM CRs |
+| `snapshotmanagementpolicies.elastic-config-operator.freepik.com` | * | Manage SM CRs (OpenSearch) |
 | `snapshotrepositories.elastic-config-operator.freepik.com` | * | Manage Snapshot Repository CRs |
-| `clustersettings.elastic-config-operator.freepik.com` | * | Manage Cluster Settings CRs |
 
 ## Troubleshooting
 

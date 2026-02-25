@@ -39,6 +39,7 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 
 	var endpoint, username, password string
 	var caCert []byte
+	var clientCertificates []tls.Certificate
 
 	// Check if manual configuration is provided
 	if resourceSelector.Endpoint != "" {
@@ -47,45 +48,84 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 		endpoint = resourceSelector.Endpoint
 		logger.Info(fmt.Sprintf("Manual endpoint: %s", endpoint))
 
-		// Get username
-		if resourceSelector.Username != "" {
-			username = resourceSelector.Username
-		} else {
-			return nil, fmt.Errorf("username is required when using manual configuration")
-		}
+		// Determine authentication mode: certificates or username/password
+		if resourceSelector.CertificatesSecretRef != nil {
+			// Certificate-based authentication (mTLS)
+			logger.Info("Using certificate-based authentication (mTLS)")
 
-		// Get password from secret
-		if resourceSelector.PasswordSecretRef == nil {
-			return nil, fmt.Errorf("passwordSecretRef is required when using manual configuration")
-		}
-		// Use specified namespace or default to target namespace
-		passwordSecretNamespace := resourceSelector.PasswordSecretRef.Namespace
-		if passwordSecretNamespace == "" {
-			passwordSecretNamespace = targetNamespace
-		}
-		passwordSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(passwordSecretNamespace).Get(ctx, resourceSelector.PasswordSecretRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to get password secret: %w", err)
-		}
-		password = string(passwordSecret.Data[resourceSelector.PasswordSecretRef.Key])
-		if password == "" {
-			return nil, fmt.Errorf("password not found in secret %s/%s key %s", passwordSecretNamespace, resourceSelector.PasswordSecretRef.Name, resourceSelector.PasswordSecretRef.Key)
-		}
-
-		// Get CA certificate from secret (optional)
-		if resourceSelector.CACertSecretRef != nil {
-			// Use specified namespace or default to target namespace
-			caCertSecretNamespace := resourceSelector.CACertSecretRef.Namespace
-			if caCertSecretNamespace == "" {
-				caCertSecretNamespace = targetNamespace
+			certSecretNamespace := resourceSelector.CertificatesSecretRef.Namespace
+			if certSecretNamespace == "" {
+				certSecretNamespace = targetNamespace
 			}
-			caCertSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(caCertSecretNamespace).Get(ctx, resourceSelector.CACertSecretRef.Name, metav1.GetOptions{})
+
+			certSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(certSecretNamespace).
+				Get(ctx, resourceSelector.CertificatesSecretRef.Name, metav1.GetOptions{})
 			if err != nil {
-				return nil, fmt.Errorf("failed to get CA certificate secret: %w", err)
+				return nil, fmt.Errorf("failed to get certificates secret: %w", err)
 			}
-			caCert = caCertSecret.Data[resourceSelector.CACertSecretRef.Key]
+
+			// Extract CA certificate
+			caCert = certSecret.Data[resourceSelector.CertificatesSecretRef.KeyCA]
 			if len(caCert) == 0 {
-				return nil, fmt.Errorf("CA certificate not found in secret %s/%s key %s", caCertSecretNamespace, resourceSelector.CACertSecretRef.Name, resourceSelector.CACertSecretRef.Key)
+				return nil, fmt.Errorf("CA certificate not found in secret %s/%s key %s",
+					certSecretNamespace, resourceSelector.CertificatesSecretRef.Name, resourceSelector.CertificatesSecretRef.KeyCA)
+			}
+
+			// Extract client certificate and key
+			clientCertPEM := certSecret.Data[resourceSelector.CertificatesSecretRef.KeyCert]
+			if len(clientCertPEM) == 0 {
+				return nil, fmt.Errorf("client certificate not found in secret %s/%s key %s",
+					certSecretNamespace, resourceSelector.CertificatesSecretRef.Name, resourceSelector.CertificatesSecretRef.KeyCert)
+			}
+			clientKeyPEM := certSecret.Data[resourceSelector.CertificatesSecretRef.KeyKey]
+			if len(clientKeyPEM) == 0 {
+				return nil, fmt.Errorf("client key not found in secret %s/%s key %s",
+					certSecretNamespace, resourceSelector.CertificatesSecretRef.Name, resourceSelector.CertificatesSecretRef.KeyKey)
+			}
+
+			clientCert, err := tls.X509KeyPair(clientCertPEM, clientKeyPEM)
+			if err != nil {
+				return nil, fmt.Errorf("failed to load client certificate key pair: %w", err)
+			}
+			clientCertificates = []tls.Certificate{clientCert}
+		} else {
+			// Username/password authentication
+			if resourceSelector.Username != "" {
+				username = resourceSelector.Username
+			} else {
+				return nil, fmt.Errorf("username is required when using manual configuration without certificates")
+			}
+
+			if resourceSelector.PasswordSecretRef == nil {
+				return nil, fmt.Errorf("passwordSecretRef is required when using manual configuration without certificates")
+			}
+			passwordSecretNamespace := resourceSelector.PasswordSecretRef.Namespace
+			if passwordSecretNamespace == "" {
+				passwordSecretNamespace = targetNamespace
+			}
+			passwordSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(passwordSecretNamespace).Get(ctx, resourceSelector.PasswordSecretRef.Name, metav1.GetOptions{})
+			if err != nil {
+				return nil, fmt.Errorf("failed to get password secret: %w", err)
+			}
+			password = string(passwordSecret.Data[resourceSelector.PasswordSecretRef.Key])
+			if password == "" {
+				return nil, fmt.Errorf("password not found in secret %s/%s key %s", passwordSecretNamespace, resourceSelector.PasswordSecretRef.Name, resourceSelector.PasswordSecretRef.Key)
+			}
+
+			// Get CA certificate from secret (optional for basic auth)
+			if resourceSelector.CACertSecretRef != nil {
+				caCertSecretNamespace := resourceSelector.CACertSecretRef.Namespace
+				if caCertSecretNamespace == "" {
+					caCertSecretNamespace = targetNamespace
+				}
+				caCertSecret, err := Application.KubeRawCoreClient.CoreV1().Secrets(caCertSecretNamespace).Get(ctx, resourceSelector.CACertSecretRef.Name, metav1.GetOptions{})
+				if err != nil {
+					return nil, fmt.Errorf("failed to get CA certificate secret: %w", err)
+				}
+				caCert = caCertSecret.Data[resourceSelector.CACertSecretRef.Key]
+				if len(caCert) == 0 {
+					return nil, fmt.Errorf("CA certificate not found in secret %s/%s key %s", caCertSecretNamespace, resourceSelector.CACertSecretRef.Name, resourceSelector.CACertSecretRef.Key)
+				}
 			}
 		}
 	} else {
@@ -130,16 +170,16 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 	// Create TLS config
 	var tlsConfig *tls.Config
 	if len(caCert) > 0 {
-		// Use provided CA certificate
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
 		tlsConfig = &tls.Config{
-			RootCAs: caCertPool,
+			RootCAs:      caCertPool,
+			Certificates: clientCertificates,
 		}
 	} else {
-		// No CA certificate provided - use system's default or skip verification
 		tlsConfig = &tls.Config{
-			InsecureSkipVerify: true, // Use with caution - only for development/testing
+			InsecureSkipVerify: true,
+			Certificates:       clientCertificates,
 		}
 		logger.Info("No CA certificate provided, using InsecureSkipVerify (not recommended for production)")
 	}

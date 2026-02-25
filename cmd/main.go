@@ -37,10 +37,12 @@ import (
 
 	eckconfigoperatorfreepikcomv1alpha1 "elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/clustersettings"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/componenttemplate"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indexlifecyclepolicy"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indexstatemanagement"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indextemplate"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotlifecyclepolicy"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotmanagementpolicy"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotrepository"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/pools"
@@ -244,6 +246,22 @@ func main() {
 		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "IndexStateManagement")
+		os.Exit(1)
+	}
+	if err := (&componenttemplate.ComponentTemplateReconciler{
+		Client:                       mgr.GetClient(),
+		Scheme:                       mgr.GetScheme(),
+		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ComponentTemplate")
+		os.Exit(1)
+	}
+	if err := (&snapshotmanagementpolicy.SnapshotManagementPolicyReconciler{
+		Client:                       mgr.GetClient(),
+		Scheme:                       mgr.GetScheme(),
+		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SnapshotManagementPolicy")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
