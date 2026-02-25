@@ -103,6 +103,7 @@ func (r *SnapshotLifecyclePolicyReconciler) Sync(ctx context.Context, eventType 
 			logger.Info(fmt.Sprintf("Policy %s is no longer desired, deleting from Elasticsearch", policyName))
 			if err := r.deleteSnapshotLifecyclePolicy(ctx, esConnection.Client, policyName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete snapshot lifecycle policy %s", policyName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete snapshot lifecycle policy %s: %w", policyName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("Snapshot lifecycle policy %s deleted successfully", policyName))
@@ -119,16 +120,19 @@ func (r *SnapshotLifecyclePolicyReconciler) Sync(ctx context.Context, eventType 
 		policyJSON, err := policyResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal policy %s: %w", policyName, err))
 			return err
 		}
 		if err := json.Unmarshal(policyJSON, &desiredPolicy); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal policy %s: %w", policyName, err))
 			return err
 		}
 
 		// Apply the policy (PutLifecycle is idempotent - creates or updates)
 		if err := r.applySnapshotLifecyclePolicy(ctx, esConnection.Client, policyName, desiredPolicy); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply snapshot lifecycle policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply snapshot lifecycle policy %s: %w", policyName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("Snapshot lifecycle policy %s applied successfully", policyName))
@@ -139,6 +143,7 @@ func (r *SnapshotLifecyclePolicyReconciler) Sync(ctx context.Context, eventType 
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedPolicies); err != nil {
 		logger.Error(err, "Failed to update SnapshotLifecyclePolicy status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update SnapshotLifecyclePolicy status: %w", err))
 		return err
 	}
 

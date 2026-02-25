@@ -109,6 +109,7 @@ func (r *SecurityRoleReconciler) Sync(ctx context.Context, eventType watch.Event
 			logger.Info(fmt.Sprintf("Role %s is no longer desired, deleting from OpenSearch", roleName))
 			if err := r.deleteSecurityRole(ctx, esConnection.Client, roleName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete security role %s", roleName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete security role %s: %w", roleName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("Security role %s deleted successfully", roleName))
@@ -125,16 +126,19 @@ func (r *SecurityRoleReconciler) Sync(ctx context.Context, eventType watch.Event
 		roleJSON, err := roleResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal role %s", roleName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal role %s: %w", roleName, err))
 			return err
 		}
 		if err := json.Unmarshal(roleJSON, &desiredRole); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal role %s", roleName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal role %s: %w", roleName, err))
 			return err
 		}
 
 		// Apply the role (OpenSearch Security PUT is idempotent - creates or updates)
 		if err := r.applySecurityRole(ctx, esConnection.Client, roleName, desiredRole); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply security role %s", roleName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply security role %s: %w", roleName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("Security role %s applied successfully", roleName))
@@ -145,6 +149,7 @@ func (r *SecurityRoleReconciler) Sync(ctx context.Context, eventType watch.Event
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedRoles); err != nil {
 		logger.Error(err, "Failed to update SecurityRole status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update SecurityRole status: %w", err))
 		return err
 	}
 

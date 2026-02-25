@@ -193,6 +193,7 @@ func (r *ClusterSettingsReconciler) Sync(ctx context.Context, eventType watch.Ev
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedSettings); err != nil {
 		logger.Error(err, "Failed to update ClusterSettings status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update cluster settings status: %w", err))
 		return err
 	}
 

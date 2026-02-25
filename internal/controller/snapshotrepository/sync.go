@@ -103,6 +103,7 @@ func (r *SnapshotRepositoryReconciler) Sync(ctx context.Context, eventType watch
 			logger.Info(fmt.Sprintf("Repository %s is no longer desired, deleting from Elasticsearch", repoName))
 			if err := r.deleteSnapshotRepository(ctx, esConnection.Client, repoName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete snapshot repository %s", repoName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete snapshot repository %s: %w", repoName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("Snapshot repository %s deleted successfully", repoName))
@@ -119,16 +120,19 @@ func (r *SnapshotRepositoryReconciler) Sync(ctx context.Context, eventType watch
 		repoJSON, err := repoResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal repository %s", repoName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal repository %s: %w", repoName, err))
 			return err
 		}
 		if err := json.Unmarshal(repoJSON, &desiredRepository); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal repository %s", repoName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal repository %s: %w", repoName, err))
 			return err
 		}
 
 		// Apply the repository (CreateRepository is idempotent - creates or updates)
 		if err := r.applySnapshotRepository(ctx, esConnection.Client, repoName, desiredRepository); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply snapshot repository %s", repoName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply snapshot repository %s: %w", repoName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("Snapshot repository %s applied successfully", repoName))
@@ -139,6 +143,7 @@ func (r *SnapshotRepositoryReconciler) Sync(ctx context.Context, eventType watch
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedRepositories); err != nil {
 		logger.Error(err, "Failed to update SnapshotRepository status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update snapshot repository status: %w", err))
 		return err
 	}
 

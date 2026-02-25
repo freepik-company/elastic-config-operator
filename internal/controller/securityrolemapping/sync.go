@@ -109,6 +109,7 @@ func (r *SecurityRoleMappingReconciler) Sync(ctx context.Context, eventType watc
 			logger.Info(fmt.Sprintf("Role mapping %s is no longer desired, deleting from OpenSearch", roleMappingName))
 			if err := r.deleteSecurityRoleMapping(ctx, esConnection.Client, roleMappingName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete security role mapping %s", roleMappingName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete security role mapping %s: %w", roleMappingName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("Security role mapping %s deleted successfully", roleMappingName))
@@ -125,16 +126,19 @@ func (r *SecurityRoleMappingReconciler) Sync(ctx context.Context, eventType watc
 		roleMappingJSON, err := roleMappingResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal role mapping %s", roleMappingName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal role mapping %s: %w", roleMappingName, err))
 			return err
 		}
 		if err := json.Unmarshal(roleMappingJSON, &desiredRoleMapping); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal role mapping %s", roleMappingName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal role mapping %s: %w", roleMappingName, err))
 			return err
 		}
 
 		// Apply the role mapping (OpenSearch Security PUT is idempotent - creates or updates)
 		if err := r.applySecurityRoleMapping(ctx, esConnection.Client, roleMappingName, desiredRoleMapping); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply security role mapping %s", roleMappingName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply security role mapping %s: %w", roleMappingName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("Security role mapping %s applied successfully", roleMappingName))
@@ -145,6 +149,7 @@ func (r *SecurityRoleMappingReconciler) Sync(ctx context.Context, eventType watc
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedRoleMappings); err != nil {
 		logger.Error(err, "Failed to update SecurityRoleMapping status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update SecurityRoleMapping status: %w", err))
 		return err
 	}
 

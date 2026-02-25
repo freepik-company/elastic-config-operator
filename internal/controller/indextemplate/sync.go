@@ -103,6 +103,7 @@ func (r *IndexTemplateReconciler) Sync(ctx context.Context, eventType watch.Even
 			logger.Info(fmt.Sprintf("Template %s is no longer desired, deleting from Elasticsearch", templateName))
 			if err := r.deleteIndexTemplate(ctx, esConnection.Client, templateName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete index template %s", templateName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete index template %s: %w", templateName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("Index template %s deleted successfully", templateName))
@@ -119,16 +120,19 @@ func (r *IndexTemplateReconciler) Sync(ctx context.Context, eventType watch.Even
 		templateJSON, err := templateResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal template %s", templateName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal template %s: %w", templateName, err))
 			return err
 		}
 		if err := json.Unmarshal(templateJSON, &desiredTemplate); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal template %s", templateName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal template %s: %w", templateName, err))
 			return err
 		}
 
 		// Apply the template (PutIndexTemplate is idempotent - creates or updates)
 		if err := r.applyIndexTemplate(ctx, esConnection.Client, templateName, desiredTemplate); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply index template %s", templateName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply index template %s: %w", templateName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("Index template %s applied successfully", templateName))
@@ -139,6 +143,7 @@ func (r *IndexTemplateReconciler) Sync(ctx context.Context, eventType watch.Even
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedTemplates); err != nil {
 		logger.Error(err, "Failed to update IndexTemplate status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update IndexTemplate status: %w", err))
 		return err
 	}
 

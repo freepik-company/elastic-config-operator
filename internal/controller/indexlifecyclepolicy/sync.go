@@ -111,6 +111,7 @@ func (r *IndexLifecyclePolicyReconciler) Sync(ctx context.Context, eventType wat
 			logger.Info(fmt.Sprintf("Policy %s is no longer desired, deleting from Elasticsearch", policyName))
 			if err := r.deleteILMPolicy(ctx, esConnection.Client, policyName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete ILM policy %s", policyName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete ILM policy %s: %w", policyName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("ILM policy %s deleted successfully", policyName))
@@ -127,16 +128,19 @@ func (r *IndexLifecyclePolicyReconciler) Sync(ctx context.Context, eventType wat
 		policyJSON, err := policyResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal policy %s: %w", policyName, err))
 			return err
 		}
 		if err := json.Unmarshal(policyJSON, &desiredPolicy); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal policy %s: %w", policyName, err))
 			return err
 		}
 
 		// Apply the policy (PutLifecycle is idempotent - creates or updates)
 		if err := r.applyILMPolicy(ctx, esConnection.Client, policyName, desiredPolicy); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply ILM policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply ILM policy %s: %w", policyName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("ILM policy %s applied successfully", policyName))
@@ -147,6 +151,7 @@ func (r *IndexLifecyclePolicyReconciler) Sync(ctx context.Context, eventType wat
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedPolicies); err != nil {
 		logger.Error(err, "Failed to update IndexLifecyclePolicy status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update IndexLifecyclePolicy status: %w", err))
 		return err
 	}
 

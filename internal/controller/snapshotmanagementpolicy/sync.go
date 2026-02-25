@@ -109,6 +109,7 @@ func (r *SnapshotManagementPolicyReconciler) Sync(ctx context.Context, eventType
 			logger.Info(fmt.Sprintf("SM policy %s is no longer desired, deleting from OpenSearch", policyName))
 			if err := r.deleteSMPolicy(ctx, esConnection.Client, policyName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete SM policy %s", policyName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete SM policy %s: %w", policyName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("SM policy %s deleted successfully", policyName))
@@ -125,16 +126,19 @@ func (r *SnapshotManagementPolicyReconciler) Sync(ctx context.Context, eventType
 		policyJSON, err := policyResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal policy %s: %w", policyName, err))
 			return err
 		}
 		if err := json.Unmarshal(policyJSON, &desiredPolicy); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal policy %s: %w", policyName, err))
 			return err
 		}
 
 		// Apply the policy using OpenSearch SM API
 		if err := r.applySMPolicy(ctx, esConnection.Client, policyName, desiredPolicy); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply SM policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply SM policy %s: %w", policyName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("SM policy %s applied successfully", policyName))
@@ -145,6 +149,7 @@ func (r *SnapshotManagementPolicyReconciler) Sync(ctx context.Context, eventType
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedPolicies); err != nil {
 		logger.Error(err, "Failed to update SnapshotManagementPolicy status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update SnapshotManagementPolicy status: %w", err))
 		return err
 	}
 

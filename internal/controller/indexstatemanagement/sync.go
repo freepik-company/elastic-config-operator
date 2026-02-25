@@ -109,6 +109,7 @@ func (r *IndexStateManagementReconciler) Sync(ctx context.Context, eventType wat
 			logger.Info(fmt.Sprintf("Policy %s is no longer desired, deleting from OpenSearch", policyName))
 			if err := r.deleteISMPolicy(ctx, esConnection.Client, policyName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete ISM policy %s", policyName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete ISM policy %s: %w", policyName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("ISM policy %s deleted successfully", policyName))
@@ -125,16 +126,19 @@ func (r *IndexStateManagementReconciler) Sync(ctx context.Context, eventType wat
 		policyJSON, err := policyResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal ISM policy %s: %w", policyName, err))
 			return err
 		}
 		if err := json.Unmarshal(policyJSON, &desiredPolicy); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal ISM policy %s: %w", policyName, err))
 			return err
 		}
 
 		// Apply the policy (OpenSearch ISM PUT is idempotent - creates or updates)
 		if err := r.applyISMPolicy(ctx, esConnection.Client, policyName, desiredPolicy); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply ISM policy %s", policyName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply ISM policy %s: %w", policyName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("ISM policy %s applied successfully", policyName))

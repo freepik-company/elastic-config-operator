@@ -101,6 +101,7 @@ func (r *ComponentTemplateReconciler) Sync(ctx context.Context, eventType watch.
 			logger.Info(fmt.Sprintf("Component template %s is no longer desired, deleting", templateName))
 			if err := r.deleteComponentTemplate(ctx, esConnection.Client, templateName); err != nil {
 				logger.Error(err, fmt.Sprintf("Failed to delete component template %s", templateName))
+				r.SetError(ctx, resource, fmt.Errorf("failed to delete component template %s: %w", templateName, err))
 				return err
 			}
 			logger.Info(fmt.Sprintf("Component template %s deleted successfully", templateName))
@@ -117,16 +118,19 @@ func (r *ComponentTemplateReconciler) Sync(ctx context.Context, eventType watch.
 		templateJSON, err := templateResource.MarshalJSON()
 		if err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to marshal template %s", templateName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to marshal template %s: %w", templateName, err))
 			return err
 		}
 		if err := json.Unmarshal(templateJSON, &desiredTemplate); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to unmarshal template %s", templateName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to unmarshal template %s: %w", templateName, err))
 			return err
 		}
 
 		// Apply the component template
 		if err := r.applyComponentTemplate(ctx, esConnection.Client, templateName, desiredTemplate); err != nil {
 			logger.Error(err, fmt.Sprintf("Failed to apply component template %s", templateName))
+			r.SetError(ctx, resource, fmt.Errorf("failed to apply component template %s: %w", templateName, err))
 			return err
 		}
 		logger.Info(fmt.Sprintf("Component template %s applied successfully", templateName))
@@ -137,6 +141,7 @@ func (r *ComponentTemplateReconciler) Sync(ctx context.Context, eventType watch.
 	targetCluster := fmt.Sprintf("%s/%s", resource.Spec.ResourceSelector.Namespace, resource.Spec.ResourceSelector.Name)
 	if err := r.SetReady(ctx, resource, targetCluster, newAppliedTemplates); err != nil {
 		logger.Error(err, "Failed to update ComponentTemplate status")
+		r.SetError(ctx, resource, fmt.Errorf("failed to update ComponentTemplate status: %w", err))
 		return err
 	}
 
