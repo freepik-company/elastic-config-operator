@@ -189,15 +189,19 @@ func GetOrCreateElasticsearchConnection(ctx context.Context, clusterKey string, 
 	}
 
 	// Create Elasticsearch client with 10 second timeout
+	// Use a custom transport that injects the X-Elastic-Product header to bypass
+	// the go-elasticsearch v8 product check when connecting to OpenSearch
+	baseTransport := &http.Transport{
+		TLSClientConfig:       tlsConfig,
+		ResponseHeaderTimeout: 10 * time.Second,
+		IdleConnTimeout:       10 * time.Second,
+	}
+
 	cfg := elasticsearch.Config{
 		Addresses: []string{endpoint},
 		Username:  username,
 		Password:  password,
-		Transport: &http.Transport{
-			TLSClientConfig:       tlsConfig,
-			ResponseHeaderTimeout: 10 * time.Second,
-			IdleConnTimeout:       10 * time.Second,
-		},
+		Transport: &compatibilityTransport{transport: baseTransport},
 	}
 
 	esClient, err := elasticsearch.NewClient(cfg)
@@ -303,4 +307,20 @@ func detectClusterType(ctx context.Context, client *elasticsearch.Client, cluste
 	logger.Info(fmt.Sprintf("Auto-detected cluster type: %s (version: %s)", clusterType, info.Version.Number))
 
 	return clusterType, info.Version.Number, nil
+}
+
+// compatibilityTransport wraps an http.RoundTripper and injects the X-Elastic-Product
+// response header that go-elasticsearch v8 requires. This allows connecting to OpenSearch
+// clusters without the client rejecting them as "unknown product".
+type compatibilityTransport struct {
+	transport http.RoundTripper
+}
+
+func (t *compatibilityTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := t.transport.RoundTrip(req)
+	if err != nil {
+		return resp, err
+	}
+	resp.Header.Set("X-Elastic-Product", "Elasticsearch")
+	return resp, nil
 }
