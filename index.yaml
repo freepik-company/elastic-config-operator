@@ -2,6 +2,34 @@ apiVersion: v1
 entries:
   elastic-config-operator:
   - apiVersion: v2
+    appVersion: 0.0.9
+    created: "2026-02-25T11:52:10.763597751Z"
+    description: A Kubernetes operator to manage Elasticsearch and OpenSearch configuration  (ILM/ISM
+      policies, Index Templates, Snapshot Lifecycle Policies,  Snapshot Repositories,
+      and Cluster Settings) as Kubernetes Custom Resources.
+    digest: bb4bd85bc52fa852463a9ce7e228bf55415e9ca4d6ae3338f861072d8c656108
+    home: https://github.com/freepik-company/elastic-config-operator
+    keywords:
+    - freepik
+    - elasticsearch
+    - eck
+    - elastic
+    - ilm
+    - slm
+    - operator
+    - gitops
+    kubeVersion: '>=1.11.3-0'
+    maintainers:
+    - email: fradejasdaniel@gmail.com
+      name: Daniel Fradejas
+    name: elastic-config-operator
+    sources:
+    - https://github.com/freepik-company/elastic-config-operator
+    type: application
+    urls:
+    - elastic-config-operator-0.0.9.tgz
+    version: 0.0.9
+  - apiVersion: v2
     appVersion: 0.0.6
     created: "2026-02-25T10:51:42.771367506Z"
     description: A Kubernetes operator to manage Elasticsearch and OpenSearch configuration  (ILM/ISM
@@ -141,4 +169,4 @@ entries:
     urls:
     - elastic-config-operator-0.0.1.tgz
     version: 0.0.1
-generated: "2026-02-25T10:51:42.771394447Z"
+generated: "2026-02-25T11:52:10.763625072Z"
