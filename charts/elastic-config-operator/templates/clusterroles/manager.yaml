@@ -35,6 +35,7 @@ rules:
   - securityroles
   - snapshotlifecyclepolicies
   - snapshotmanagementpolicies
+  - notificationchannels
   - snapshotrepositories
   verbs:
   - create
@@ -52,6 +53,7 @@ rules:
   - indexlifecyclepolicies/finalizers
   - indexstatemanagements/finalizers
   - indextemplates/finalizers
+  - notificationchannels/finalizers
   - securityrolemappings/finalizers
   - securityroles/finalizers
   - snapshotlifecyclepolicies/finalizers
@@ -67,6 +69,7 @@ rules:
   - indexlifecyclepolicies/status
   - indexstatemanagements/status
   - indextemplates/status
+  - notificationchannels/status
   - securityrolemappings/status
   - securityroles/status
   - snapshotlifecyclepolicies/status
