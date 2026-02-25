@@ -40,4 +40,7 @@ resources:
 - indexlifecyclepolicy_admin_role.yaml
 - indexlifecyclepolicy_editor_role.yaml
 - indexlifecyclepolicy_viewer_role.yaml
+- notificationchannel_admin_role.yaml
+- notificationchannel_editor_role.yaml
+- notificationchannel_viewer_role.yaml
 

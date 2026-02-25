@@ -44,6 +44,7 @@ import (
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/securityrole"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/securityrolemapping"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotlifecyclepolicy"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/notificationchannel"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotmanagementpolicy"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotrepository"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
@@ -280,6 +281,14 @@ func main() {
 		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SecurityRoleMapping")
+		os.Exit(1)
+	}
+	if err := (&notificationchannel.NotificationChannelReconciler{
+		Client:                       mgr.GetClient(),
+		Scheme:                       mgr.GetScheme(),
+		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "NotificationChannel")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

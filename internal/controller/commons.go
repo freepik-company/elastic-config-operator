@@ -13,6 +13,7 @@ const (
 	IndexStateManagementResourceType     = "IndexStateManagement"
 	SecurityRoleResourceType             = "SecurityRole"
 	SecurityRoleMappingResourceType      = "SecurityRoleMapping"
+	NotificationChannelResourceType     = "NotificationChannel"
 
 	// Sync interval to check if the resources are up to date
 	DefaultSyncInterval = "1m"
