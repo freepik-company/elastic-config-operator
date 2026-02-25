@@ -170,11 +170,41 @@ func (r *IndexStateManagementReconciler) applyISMPolicy(ctx context.Context, esC
 
 	logger.Info(fmt.Sprintf("Applying ISM policy %s to OpenSearch", policyName))
 
+	// Check if the policy already exists to determine create vs update
+	// The ISM API requires seq_no and primary_term for updates, otherwise returns 409
+	getReq, err := http.NewRequestWithContext(ctx, "GET",
+		fmt.Sprintf("/_plugins/_ism/policies/%s", policyName), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	getRes, err := esClient.Perform(getReq)
+	if err != nil {
+		return fmt.Errorf("failed to check ISM policy existence: %w", err)
+	}
+
+	var policyURL string
+	if getRes.StatusCode == http.StatusOK {
+		// Policy exists - extract seq_no and primary_term for update
+		var getBody map[string]interface{}
+		if err := json.NewDecoder(getRes.Body).Decode(&getBody); err != nil {
+			getRes.Body.Close()
+			return fmt.Errorf("failed to decode existing ISM policy response: %w", err)
+		}
+		getRes.Body.Close()
+
+		seqNo, _ := getBody["_seq_no"].(float64)
+		primaryTerm, _ := getBody["_primary_term"].(float64)
+		policyURL = fmt.Sprintf("/_plugins/_ism/policies/%s?if_seq_no=%.0f&if_primary_term=%.0f", policyName, seqNo, primaryTerm)
+		logger.Info(fmt.Sprintf("ISM policy %s exists, updating with seq_no=%.0f primary_term=%.0f", policyName, seqNo, primaryTerm))
+	} else {
+		getRes.Body.Close()
+		policyURL = fmt.Sprintf("/_plugins/_ism/policies/%s", policyName)
+		logger.Info(fmt.Sprintf("ISM policy %s does not exist, creating", policyName))
+	}
+
 	// Apply the ISM policy using OpenSearch ISM API
-	// PUT /_plugins/_ism/policies/{policy_name}
-	req, err := http.NewRequestWithContext(ctx, "PUT",
-		fmt.Sprintf("/_plugins/_ism/policies/%s", policyName),
-		bytes.NewReader(policyJSON))
+	req, err := http.NewRequestWithContext(ctx, "PUT", policyURL, bytes.NewReader(policyJSON))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
