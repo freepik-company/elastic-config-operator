@@ -181,19 +181,36 @@ func (r *SnapshotManagementPolicyReconciler) applySMPolicy(ctx context.Context, 
 	if err != nil {
 		return fmt.Errorf("failed to check SM policy existence: %w", err)
 	}
-	getRes.Body.Close()
 
 	// Use POST for creation, PUT for update
-	var method string
+	var method, url string
 	if getRes.StatusCode == http.StatusOK {
+		// Extract seq_no and primary_term from the GET response (required for updates)
+		bodyBytes, err := io.ReadAll(getRes.Body)
+		getRes.Body.Close()
+		if err != nil {
+			return fmt.Errorf("failed to read SM policy response: %w", err)
+		}
+
+		var getResponse struct {
+			SeqNo       int64 `json:"_seq_no"`
+			PrimaryTerm int64 `json:"_primary_term"`
+		}
+		if err := json.Unmarshal(bodyBytes, &getResponse); err != nil {
+			return fmt.Errorf("failed to parse SM policy response: %w", err)
+		}
+
 		method = "PUT"
+		url = fmt.Sprintf("/_plugins/_sm/policies/%s?if_seq_no=%d&if_primary_term=%d",
+			policyName, getResponse.SeqNo, getResponse.PrimaryTerm)
+		logger.Info(fmt.Sprintf("Updating existing SM policy %s (seq_no: %d, primary_term: %d)", policyName, getResponse.SeqNo, getResponse.PrimaryTerm))
 	} else {
+		getRes.Body.Close()
 		method = "POST"
+		url = fmt.Sprintf("/_plugins/_sm/policies/%s", policyName)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method,
-		fmt.Sprintf("/_plugins/_sm/policies/%s", policyName),
-		bytes.NewReader(policyJSON))
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(policyJSON))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
