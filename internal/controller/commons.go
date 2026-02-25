@@ -11,6 +11,8 @@ const (
 	SnapshotManagementPolicyResourceType = "SnapshotManagementPolicy"
 	ClusterSettingsResourceType          = "ClusterSettings"
 	IndexStateManagementResourceType     = "IndexStateManagement"
+	SecurityRoleResourceType             = "SecurityRole"
+	SecurityRoleMappingResourceType      = "SecurityRoleMapping"
 
 	// Sync interval to check if the resources are up to date
 	DefaultSyncInterval = "1m"

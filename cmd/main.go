@@ -41,6 +41,8 @@ import (
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indexlifecyclepolicy"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indexstatemanagement"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/indextemplate"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/securityrole"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/securityrolemapping"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotlifecyclepolicy"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotmanagementpolicy"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller/snapshotrepository"
@@ -262,6 +264,22 @@ func main() {
 		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "SnapshotManagementPolicy")
+		os.Exit(1)
+	}
+	if err := (&securityrole.SecurityRoleReconciler{
+		Client:                       mgr.GetClient(),
+		Scheme:                       mgr.GetScheme(),
+		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SecurityRole")
+		os.Exit(1)
+	}
+	if err := (&securityrolemapping.SecurityRoleMappingReconciler{
+		Client:                       mgr.GetClient(),
+		Scheme:                       mgr.GetScheme(),
+		ElasticsearchConnectionsPool: ElasticsearchConnectionsPool,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "SecurityRoleMapping")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
