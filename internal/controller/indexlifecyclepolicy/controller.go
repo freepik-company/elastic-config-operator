@@ -81,10 +81,14 @@ func (r *IndexLifecyclePolicyReconciler) Reconcile(ctx context.Context, req ctrl
 	if !indexLifecyclePolicyResource.DeletionTimestamp.IsZero() {
 		if controllerutil.ContainsFinalizer(indexLifecyclePolicyResource, controller.ResourceFinalizer) {
 
-			// 3.1 Delete the resources associated with the SearchRule
-			err = r.Sync(ctx, watch.Deleted, indexLifecyclePolicyResource)
+			// 3.1 Delete the resources associated with the IndexLifecyclePolicy
+			if !indexLifecyclePolicyResource.Spec.Protected {
+				err = r.Sync(ctx, watch.Deleted, indexLifecyclePolicyResource)
+			} else {
+				logger.Info(fmt.Sprintf("Protected resource %s/%s, skipping deletion of external resources", indexLifecyclePolicyResource.Namespace, indexLifecyclePolicyResource.Name))
+			}
 
-			// Remove the finalizers on Patch CR
+			// Remove the finalizers
 			controllerutil.RemoveFinalizer(indexLifecyclePolicyResource, controller.ResourceFinalizer)
 			err = r.Update(ctx, indexLifecyclePolicyResource)
 			if err != nil {
@@ -128,15 +132,19 @@ func (r *IndexLifecyclePolicyReconciler) Reconcile(ctx context.Context, req ctrl
 		RequeueAfter: RequeueTime,
 	}
 
-	// 7. Check the rule
+	// 7. Sync the resources
 	err = r.Sync(ctx, watch.Modified, indexLifecyclePolicyResource)
 	if err != nil {
+		indexLifecyclePolicyResource.Status.ConsecutiveErrors++
+		backoff := controller.CalculateBackoff(indexLifecyclePolicyResource.Status.ConsecutiveErrors)
+		result = ctrl.Result{RequeueAfter: backoff}
 		r.UpdateConditionKubernetesApiCallFailure(indexLifecyclePolicyResource)
 		logger.Info(fmt.Sprintf(controller.SyncTargetError, controller.IndexLifecyclePolicyResourceType, req.NamespacedName, err.Error()))
 		return result, err
 	}
 
 	// 8. Success, update the status
+	indexLifecyclePolicyResource.Status.ConsecutiveErrors = 0
 	r.UpdateConditionSuccess(indexLifecyclePolicyResource)
 
 	return result, err

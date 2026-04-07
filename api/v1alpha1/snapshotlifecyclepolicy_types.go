@@ -32,6 +32,10 @@ type SnapshotLifecyclePolicySpec struct {
 	// +optional
 	// +kubebuilder:default="10s"
 	SyncInterval string `json:"syncInterval,omitempty"`
+
+	// Protected prevents deletion of external resources when this Kubernetes resource is deleted
+	// +optional
+	Protected bool `json:"protected,omitempty"`
 }
 
 // SnapshotLifecyclePolicyStatus defines the observed state of SnapshotLifecyclePolicy.
@@ -63,6 +67,10 @@ type SnapshotLifecyclePolicyStatus struct {
 	// LastSyncTime is the timestamp of the last successful synchronization with Elasticsearch
 	// +optional
 	LastSyncTime *metav1.Time `json:"lastSyncTime,omitempty"`
+
+	// ConsecutiveErrors tracks the number of consecutive sync failures for exponential backoff
+	// +optional
+	ConsecutiveErrors int32 `json:"consecutiveErrors,omitempty"`
 
 	// conditions represent the current state of the SnapshotLifecyclePolicy resource.
 	// Each condition has a unique type and reflects the status of a specific aspect of the resource.

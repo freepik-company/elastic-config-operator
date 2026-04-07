@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -205,6 +206,26 @@ func (r *ClusterSettingsReconciler) Sync(ctx context.Context, eventType watch.Ev
 // applyClusterSettings creates or updates cluster settings in Elasticsearch
 func (r *ClusterSettingsReconciler) applyClusterSettings(ctx context.Context, esClient *elasticsearch.Client, category string, settings map[string]interface{}) error {
 	logger := log.FromContext(ctx)
+
+	// GET current state and compare to detect drift
+	getRes, getErr := esClient.Cluster.GetSettings(esClient.Cluster.GetSettings.WithContext(ctx), esClient.Cluster.GetSettings.WithFlatSettings(false))
+	if getErr == nil && !getRes.IsError() {
+		defer getRes.Body.Close()
+		bodyBytes, readErr := io.ReadAll(getRes.Body)
+		if readErr == nil {
+			var getBody map[string]interface{}
+			if json.Unmarshal(bodyBytes, &getBody) == nil {
+				if currentSettings, ok := getBody[category].(map[string]interface{}); ok {
+					if controller.IsSubsetMatch(settings, currentSettings) {
+						logger.Info(fmt.Sprintf("No drift detected for cluster settings %s, skipping apply", category))
+						return nil
+					}
+				}
+			}
+		}
+	} else if getErr == nil {
+		getRes.Body.Close()
+	}
 
 	// Build the request body: { "category": { ... settings ... } }
 	requestBody := map[string]interface{}{

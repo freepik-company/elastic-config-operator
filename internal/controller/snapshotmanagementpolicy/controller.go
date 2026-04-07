@@ -73,7 +73,11 @@ func (r *SnapshotManagementPolicyReconciler) Reconcile(ctx context.Context, req 
 		if controllerutil.ContainsFinalizer(snapshotManagementPolicyResource, controller.ResourceFinalizer) {
 
 			// 3.1 Delete the resources associated with the SnapshotManagementPolicy
-			err = r.Sync(ctx, watch.Deleted, snapshotManagementPolicyResource)
+			if !snapshotManagementPolicyResource.Spec.Protected {
+				err = r.Sync(ctx, watch.Deleted, snapshotManagementPolicyResource)
+			} else {
+				logger.Info(fmt.Sprintf("Protected resource %s/%s, skipping deletion of external resources", snapshotManagementPolicyResource.Namespace, snapshotManagementPolicyResource.Name))
+			}
 
 			// Remove the finalizers on SnapshotManagementPolicy CR
 			controllerutil.RemoveFinalizer(snapshotManagementPolicyResource, controller.ResourceFinalizer)
@@ -122,12 +126,16 @@ func (r *SnapshotManagementPolicyReconciler) Reconcile(ctx context.Context, req 
 	// 7. Sync the SM policies
 	err = r.Sync(ctx, watch.Modified, snapshotManagementPolicyResource)
 	if err != nil {
+		snapshotManagementPolicyResource.Status.ConsecutiveErrors++
+		backoff := controller.CalculateBackoff(snapshotManagementPolicyResource.Status.ConsecutiveErrors)
+		result = ctrl.Result{RequeueAfter: backoff}
 		r.UpdateConditionKubernetesApiCallFailure(snapshotManagementPolicyResource)
 		logger.Info(fmt.Sprintf(controller.SyncTargetError, controller.SnapshotManagementPolicyResourceType, req.NamespacedName, err.Error()))
 		return result, err
 	}
 
 	// 8. Success, update the status
+	snapshotManagementPolicyResource.Status.ConsecutiveErrors = 0
 	r.UpdateConditionSuccess(snapshotManagementPolicyResource)
 
 	return result, err

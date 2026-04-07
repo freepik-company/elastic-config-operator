@@ -82,9 +82,13 @@ func (r *SnapshotRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.R
 		if controllerutil.ContainsFinalizer(snapshotRepositoryResource, controller.ResourceFinalizer) {
 
 			// 3.1 Delete the resources associated with the SnapshotRepository
-			err = r.Sync(ctx, watch.Deleted, snapshotRepositoryResource)
+			if !snapshotRepositoryResource.Spec.Protected {
+				err = r.Sync(ctx, watch.Deleted, snapshotRepositoryResource)
+			} else {
+				logger.Info(fmt.Sprintf("Protected resource %s/%s, skipping deletion of external resources", snapshotRepositoryResource.Namespace, snapshotRepositoryResource.Name))
+			}
 
-			// Remove the finalizers on Patch CR
+			// Remove the finalizers
 			controllerutil.RemoveFinalizer(snapshotRepositoryResource, controller.ResourceFinalizer)
 			err = r.Update(ctx, snapshotRepositoryResource)
 			if err != nil {
@@ -128,15 +132,19 @@ func (r *SnapshotRepositoryReconciler) Reconcile(ctx context.Context, req ctrl.R
 		RequeueAfter: RequeueTime,
 	}
 
-	// 7. Check the rule
+	// 7. Sync the resources
 	err = r.Sync(ctx, watch.Modified, snapshotRepositoryResource)
 	if err != nil {
+		snapshotRepositoryResource.Status.ConsecutiveErrors++
+		backoff := controller.CalculateBackoff(snapshotRepositoryResource.Status.ConsecutiveErrors)
+		result = ctrl.Result{RequeueAfter: backoff}
 		r.UpdateConditionKubernetesApiCallFailure(snapshotRepositoryResource)
 		logger.Info(fmt.Sprintf(controller.SyncTargetError, controller.SnapshotRepositoryResourceType, req.NamespacedName, err.Error()))
 		return result, err
 	}
 
 	// 8. Success, update the status
+	snapshotRepositoryResource.Status.ConsecutiveErrors = 0
 	r.UpdateConditionSuccess(snapshotRepositoryResource)
 
 	return result, err

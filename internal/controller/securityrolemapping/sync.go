@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -169,6 +170,34 @@ func (r *SecurityRoleMappingReconciler) applySecurityRoleMapping(ctx context.Con
 	}
 
 	logger.Info(fmt.Sprintf("Applying security role mapping %s to OpenSearch", roleMappingName))
+
+	// Check if role mapping exists and compare for drift
+	getReq, err := http.NewRequestWithContext(ctx, "GET",
+		fmt.Sprintf("/_plugins/_security/api/rolesmapping/%s", roleMappingName), nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	getRes, err := esClient.Perform(getReq)
+	if err != nil {
+		logger.Info(fmt.Sprintf("Failed to check security role mapping %s existence, proceeding with apply: %v", roleMappingName, err))
+	} else {
+		if getRes.StatusCode == http.StatusOK {
+			var getBody map[string]interface{}
+			if err := json.NewDecoder(getRes.Body).Decode(&getBody); err == nil {
+				if currentMapping, ok := getBody[roleMappingName]; ok {
+					if controller.IsSubsetMatch(roleMapping, currentMapping) {
+						logger.Info(fmt.Sprintf("No drift detected for security role mapping %s, skipping apply", roleMappingName))
+						getRes.Body.Close()
+						return nil
+					}
+				}
+			}
+			getRes.Body.Close()
+		} else {
+			getRes.Body.Close()
+		}
+	}
 
 	// Apply the security role mapping using OpenSearch Security Plugin API
 	// PUT /_plugins/_security/api/rolesmapping/{role_name}

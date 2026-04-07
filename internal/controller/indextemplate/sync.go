@@ -30,6 +30,7 @@ import (
 
 	//
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -155,6 +156,30 @@ func (r *IndexTemplateReconciler) Sync(ctx context.Context, eventType watch.Even
 // applyIndexTemplate creates or updates an index template in Elasticsearch
 func (r *IndexTemplateReconciler) applyIndexTemplate(ctx context.Context, esClient *elasticsearch.Client, templateName string, template map[string]interface{}) error {
 	logger := log.FromContext(ctx)
+
+	// GET current state and compare to detect drift
+	getRes, getErr := esClient.Indices.GetIndexTemplate(esClient.Indices.GetIndexTemplate.WithName(templateName), esClient.Indices.GetIndexTemplate.WithContext(ctx))
+	if getErr == nil && !getRes.IsError() {
+		defer getRes.Body.Close()
+		bodyBytes, readErr := io.ReadAll(getRes.Body)
+		if readErr == nil {
+			var getBody map[string]interface{}
+			if json.Unmarshal(bodyBytes, &getBody) == nil {
+				if templates, ok := getBody["index_templates"].([]interface{}); ok && len(templates) > 0 {
+					if first, ok := templates[0].(map[string]interface{}); ok {
+						if currentTemplate, ok := first["index_template"].(map[string]interface{}); ok {
+							if controller.IsSubsetMatch(template, currentTemplate) {
+								logger.Info(fmt.Sprintf("No drift detected for index template %s, skipping apply", templateName))
+								return nil
+							}
+						}
+					}
+				}
+			}
+		}
+	} else if getErr == nil {
+		getRes.Body.Close()
+	}
 
 	// Marshal the template to JSON
 	templateJSON, err := json.Marshal(template)

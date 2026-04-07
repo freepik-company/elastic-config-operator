@@ -35,6 +35,10 @@ type SecurityRoleMappingSpec struct {
 	// Resources contains the security role mappings to apply, keyed by role name
 	// Each key represents a role name, the value is the role mapping definition
 	Resources map[string]apiextensionsv1.JSON `json:"resources"`
+
+	// Protected prevents deletion of external resources when this Kubernetes resource is deleted
+	// +optional
+	Protected bool `json:"protected,omitempty"`
 }
 
 // SecurityRoleMappingStatus defines the observed state of SecurityRoleMapping.
@@ -61,6 +65,10 @@ type SecurityRoleMappingStatus struct {
 	// LastSyncTime records the last time the resource was successfully synchronized with OpenSearch.
 	// +optional
 	LastSyncTime *metav1.Time `json:"lastSyncTime,omitempty"`
+
+	// ConsecutiveErrors tracks the number of consecutive sync failures for exponential backoff
+	// +optional
+	ConsecutiveErrors int32 `json:"consecutiveErrors,omitempty"`
 
 	// conditions represent the current state of the SecurityRoleMapping resource.
 	// Each condition has a unique type and reflects the status of a specific aspect of the resource.

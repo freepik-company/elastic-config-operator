@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -185,7 +186,25 @@ func (r *NotificationChannelReconciler) applyNotificationChannel(ctx context.Con
 	// Use POST for creation, PUT for update
 	var method, url string
 	if getRes.StatusCode == http.StatusOK {
+		// Parse the response to check for drift
+		bodyBytes, err := io.ReadAll(getRes.Body)
 		getRes.Body.Close()
+		if err == nil {
+			var getResponse map[string]interface{}
+			if err := json.Unmarshal(bodyBytes, &getResponse); err == nil {
+				if configList, ok := getResponse["config_list"].([]interface{}); ok && len(configList) > 0 {
+					if configEntry, ok := configList[0].(map[string]interface{}); ok {
+						if currentConfig, ok := configEntry["config"]; ok {
+							if controller.IsSubsetMatch(config, currentConfig) {
+								logger.Info(fmt.Sprintf("No drift detected for notification channel %s, skipping apply", channelID))
+								return nil
+							}
+						}
+					}
+				}
+			}
+		}
+
 		method = "PUT"
 		url = fmt.Sprintf("/_plugins/_notifications/configs/%s", channelID)
 		logger.Info(fmt.Sprintf("Updating existing notification channel %s", channelID))

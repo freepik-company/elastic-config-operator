@@ -75,7 +75,11 @@ func (r *ClusterSettingsReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		if controllerutil.ContainsFinalizer(clusterSettingsResource, controller.ResourceFinalizer) {
 
 			// 3.1 Delete the resources associated with the ClusterSettings
-			err = r.Sync(ctx, watch.Deleted, clusterSettingsResource)
+			if !clusterSettingsResource.Spec.Protected {
+				err = r.Sync(ctx, watch.Deleted, clusterSettingsResource)
+			} else {
+				logger.Info(fmt.Sprintf("Protected resource %s/%s, skipping deletion of external resources", clusterSettingsResource.Namespace, clusterSettingsResource.Name))
+			}
 
 			// Remove the finalizers on ClusterSettings CR
 			controllerutil.RemoveFinalizer(clusterSettingsResource, controller.ResourceFinalizer)
@@ -124,12 +128,16 @@ func (r *ClusterSettingsReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 	// 7. Sync the cluster settings
 	err = r.Sync(ctx, watch.Modified, clusterSettingsResource)
 	if err != nil {
+		clusterSettingsResource.Status.ConsecutiveErrors++
+		backoff := controller.CalculateBackoff(clusterSettingsResource.Status.ConsecutiveErrors)
+		result = ctrl.Result{RequeueAfter: backoff}
 		r.UpdateConditionKubernetesApiCallFailure(clusterSettingsResource)
 		logger.Info(fmt.Sprintf(controller.SyncTargetError, controller.ClusterSettingsResourceType, req.NamespacedName, err.Error()))
 		return result, err
 	}
 
 	// 8. Success, update the status
+	clusterSettingsResource.Status.ConsecutiveErrors = 0
 	r.UpdateConditionSuccess(clusterSettingsResource)
 
 	return result, err

@@ -1,5 +1,9 @@
 package controller
 
+import (
+	"time"
+)
+
 const (
 
 	// Resource types
@@ -13,7 +17,7 @@ const (
 	IndexStateManagementResourceType     = "IndexStateManagement"
 	SecurityRoleResourceType             = "SecurityRole"
 	SecurityRoleMappingResourceType      = "SecurityRoleMapping"
-	NotificationChannelResourceType     = "NotificationChannel"
+	NotificationChannelResourceType      = "NotificationChannel"
 
 	// Sync interval to check if the resources are up to date
 	DefaultSyncInterval = "1m"
@@ -55,4 +59,24 @@ const (
 
 	// Finalizer
 	ResourceFinalizer = "elastic-config-operator.freepik.com/finalizer"
+
+	// Exponential backoff constants for error retries
+	ErrorBackoffBase = 5 * time.Second
+	ErrorBackoffMax  = 5 * time.Minute
 )
+
+// CalculateBackoff returns an exponential backoff duration based on consecutive errors.
+// Formula: base * 2^(errors-1), capped at max.
+func CalculateBackoff(consecutiveErrors int32) time.Duration {
+	if consecutiveErrors <= 0 {
+		return ErrorBackoffBase
+	}
+	backoff := ErrorBackoffBase
+	for i := int32(1); i < consecutiveErrors && backoff < ErrorBackoffMax; i++ {
+		backoff *= 2
+	}
+	if backoff > ErrorBackoffMax {
+		backoff = ErrorBackoffMax
+	}
+	return backoff
+}

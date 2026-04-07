@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -196,6 +197,14 @@ func (r *IndexStateManagementReconciler) applyISMPolicy(ctx context.Context, esC
 			return fmt.Errorf("failed to decode existing ISM policy response: %w", err)
 		}
 		getRes.Body.Close()
+
+		// Check for drift using subset comparison
+		if currentPolicy, ok := getBody["policy"]; ok {
+			if controller.IsSubsetMatch(policy, currentPolicy) {
+				logger.Info(fmt.Sprintf("No drift detected for ISM policy %s, skipping apply", policyName))
+				return nil
+			}
+		}
 
 		seqNo, _ := getBody["_seq_no"].(float64)
 		primaryTerm, _ := getBody["_primary_term"].(float64)

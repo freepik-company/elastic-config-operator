@@ -30,6 +30,7 @@ import (
 
 	//
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -155,6 +156,26 @@ func (r *SnapshotRepositoryReconciler) Sync(ctx context.Context, eventType watch
 // applySnapshotRepository creates or updates a snapshot repository in Elasticsearch
 func (r *SnapshotRepositoryReconciler) applySnapshotRepository(ctx context.Context, esClient *elasticsearch.Client, repoName string, repository map[string]interface{}) error {
 	logger := log.FromContext(ctx)
+
+	// GET current state and compare to detect drift
+	getRes, getErr := esClient.Snapshot.GetRepository(esClient.Snapshot.GetRepository.WithRepository(repoName), esClient.Snapshot.GetRepository.WithContext(ctx))
+	if getErr == nil && !getRes.IsError() {
+		defer getRes.Body.Close()
+		bodyBytes, readErr := io.ReadAll(getRes.Body)
+		if readErr == nil {
+			var getBody map[string]interface{}
+			if json.Unmarshal(bodyBytes, &getBody) == nil {
+				if currentRepo, ok := getBody[repoName].(map[string]interface{}); ok {
+					if controller.IsSubsetMatch(repository, currentRepo) {
+						logger.Info(fmt.Sprintf("No drift detected for snapshot repository %s, skipping apply", repoName))
+						return nil
+					}
+				}
+			}
+		}
+	} else if getErr == nil {
+		getRes.Body.Close()
+	}
 
 	// Marshal the repository to JSON
 	repoJSON, err := json.Marshal(repository)

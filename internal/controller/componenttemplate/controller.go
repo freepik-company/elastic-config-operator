@@ -73,7 +73,11 @@ func (r *ComponentTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if controllerutil.ContainsFinalizer(componentTemplateResource, controller.ResourceFinalizer) {
 
 			// 3.1 Delete the resources associated with the ComponentTemplate
-			err = r.Sync(ctx, watch.Deleted, componentTemplateResource)
+			if !componentTemplateResource.Spec.Protected {
+				err = r.Sync(ctx, watch.Deleted, componentTemplateResource)
+			} else {
+				logger.Info(fmt.Sprintf("Protected resource %s/%s, skipping deletion of external resources", componentTemplateResource.Namespace, componentTemplateResource.Name))
+			}
 
 			// Remove the finalizers on ComponentTemplate CR
 			controllerutil.RemoveFinalizer(componentTemplateResource, controller.ResourceFinalizer)
@@ -122,12 +126,16 @@ func (r *ComponentTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	// 7. Sync the component templates
 	err = r.Sync(ctx, watch.Modified, componentTemplateResource)
 	if err != nil {
+		componentTemplateResource.Status.ConsecutiveErrors++
+		backoff := controller.CalculateBackoff(componentTemplateResource.Status.ConsecutiveErrors)
+		result = ctrl.Result{RequeueAfter: backoff}
 		r.UpdateConditionKubernetesApiCallFailure(componentTemplateResource)
 		logger.Info(fmt.Sprintf(controller.SyncTargetError, controller.ComponentTemplateResourceType, req.NamespacedName, err.Error()))
 		return result, err
 	}
 
 	// 8. Success, update the status
+	componentTemplateResource.Status.ConsecutiveErrors = 0
 	r.UpdateConditionSuccess(componentTemplateResource)
 
 	return result, err

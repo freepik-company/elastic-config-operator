@@ -74,7 +74,11 @@ func (r *SecurityRoleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if controllerutil.ContainsFinalizer(securityRoleResource, controller.ResourceFinalizer) {
 
 			// 3.1 Delete the resources associated with the SecurityRole
-			err = r.Sync(ctx, watch.Deleted, securityRoleResource)
+			if !securityRoleResource.Spec.Protected {
+				err = r.Sync(ctx, watch.Deleted, securityRoleResource)
+			} else {
+				logger.Info(fmt.Sprintf("Protected resource %s/%s, skipping deletion of external resources", securityRoleResource.Namespace, securityRoleResource.Name))
+			}
 
 			// Remove the finalizers on SecurityRole CR
 			controllerutil.RemoveFinalizer(securityRoleResource, controller.ResourceFinalizer)
@@ -123,12 +127,16 @@ func (r *SecurityRoleReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// 7. Sync the security roles
 	err = r.Sync(ctx, watch.Modified, securityRoleResource)
 	if err != nil {
+		securityRoleResource.Status.ConsecutiveErrors++
+		backoff := controller.CalculateBackoff(securityRoleResource.Status.ConsecutiveErrors)
+		result = ctrl.Result{RequeueAfter: backoff}
 		r.UpdateConditionKubernetesApiCallFailure(securityRoleResource)
 		logger.Info(fmt.Sprintf(controller.SyncTargetError, controller.SecurityRoleResourceType, req.NamespacedName, err.Error()))
 		return result, err
 	}
 
 	// 8. Success, update the status
+	securityRoleResource.Status.ConsecutiveErrors = 0
 	r.UpdateConditionSuccess(securityRoleResource)
 
 	return result, err

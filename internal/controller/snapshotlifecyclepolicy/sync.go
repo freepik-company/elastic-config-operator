@@ -30,6 +30,7 @@ import (
 
 	//
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -155,6 +156,28 @@ func (r *SnapshotLifecyclePolicyReconciler) Sync(ctx context.Context, eventType 
 // applySnapshotLifecyclePolicy creates or updates a snapshot lifecycle policy in Elasticsearch
 func (r *SnapshotLifecyclePolicyReconciler) applySnapshotLifecyclePolicy(ctx context.Context, esClient *elasticsearch.Client, policyName string, policy map[string]interface{}) error {
 	logger := log.FromContext(ctx)
+
+	// GET current state and compare to detect drift
+	getRes, getErr := esClient.SlmGetLifecycle(esClient.SlmGetLifecycle.WithPolicyID(policyName), esClient.SlmGetLifecycle.WithContext(ctx))
+	if getErr == nil && !getRes.IsError() {
+		defer getRes.Body.Close()
+		bodyBytes, readErr := io.ReadAll(getRes.Body)
+		if readErr == nil {
+			var getBody map[string]interface{}
+			if json.Unmarshal(bodyBytes, &getBody) == nil {
+				if policyEntry, ok := getBody[policyName].(map[string]interface{}); ok {
+					if currentPolicy, ok := policyEntry["policy"].(map[string]interface{}); ok {
+						if controller.IsSubsetMatch(policy, currentPolicy) {
+							logger.Info(fmt.Sprintf("No drift detected for snapshot lifecycle policy %s, skipping apply", policyName))
+							return nil
+						}
+					}
+				}
+			}
+		}
+	} else if getErr == nil {
+		getRes.Body.Close()
+	}
 
 	// Marshal the policy to JSON
 	policyJSON, err := json.Marshal(policy)

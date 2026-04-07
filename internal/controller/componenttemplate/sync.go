@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -153,6 +154,30 @@ func (r *ComponentTemplateReconciler) Sync(ctx context.Context, eventType watch.
 // applyComponentTemplate creates or updates a component template using the _component_template API
 func (r *ComponentTemplateReconciler) applyComponentTemplate(ctx context.Context, esClient *elasticsearch.Client, templateName string, template map[string]interface{}) error {
 	logger := log.FromContext(ctx)
+
+	// GET current state and compare to detect drift
+	getRes, getErr := esClient.Cluster.GetComponentTemplate(esClient.Cluster.GetComponentTemplate.WithName(templateName), esClient.Cluster.GetComponentTemplate.WithContext(ctx))
+	if getErr == nil && !getRes.IsError() {
+		defer getRes.Body.Close()
+		bodyBytes, readErr := io.ReadAll(getRes.Body)
+		if readErr == nil {
+			var getBody map[string]interface{}
+			if json.Unmarshal(bodyBytes, &getBody) == nil {
+				if templates, ok := getBody["component_templates"].([]interface{}); ok && len(templates) > 0 {
+					if first, ok := templates[0].(map[string]interface{}); ok {
+						if currentTemplate, ok := first["component_template"].(map[string]interface{}); ok {
+							if controller.IsSubsetMatch(template, currentTemplate) {
+								logger.Info(fmt.Sprintf("No drift detected for component template %s, skipping apply", templateName))
+								return nil
+							}
+						}
+					}
+				}
+			}
+		}
+	} else if getErr == nil {
+		getRes.Body.Close()
+	}
 
 	templateJSON, err := json.Marshal(template)
 	if err != nil {

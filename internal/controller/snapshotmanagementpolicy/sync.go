@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"elastic-config-operator.freepik.com/elastic-config-operator/api/v1alpha1"
+	"elastic-config-operator.freepik.com/elastic-config-operator/internal/controller"
 	"elastic-config-operator.freepik.com/elastic-config-operator/internal/globals"
 )
 
@@ -185,25 +186,34 @@ func (r *SnapshotManagementPolicyReconciler) applySMPolicy(ctx context.Context, 
 	// Use POST for creation, PUT for update
 	var method, url string
 	if getRes.StatusCode == http.StatusOK {
-		// Extract seq_no and primary_term from the GET response (required for updates)
+		// Read and parse the full GET response
 		bodyBytes, err := io.ReadAll(getRes.Body)
 		getRes.Body.Close()
 		if err != nil {
 			return fmt.Errorf("failed to read SM policy response: %w", err)
 		}
 
-		var getResponse struct {
-			SeqNo       int64 `json:"_seq_no"`
-			PrimaryTerm int64 `json:"_primary_term"`
-		}
+		var getResponse map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &getResponse); err != nil {
 			return fmt.Errorf("failed to parse SM policy response: %w", err)
 		}
 
+		// Check for drift using subset comparison
+		if currentSMPolicy, ok := getResponse["sm_policy"]; ok {
+			if controller.IsSubsetMatch(policy, currentSMPolicy) {
+				logger.Info(fmt.Sprintf("No drift detected for SM policy %s, skipping apply", policyName))
+				return nil
+			}
+		}
+
+		// Extract seq_no and primary_term for update
+		seqNo, _ := getResponse["_seq_no"].(float64)
+		primaryTerm, _ := getResponse["_primary_term"].(float64)
+
 		method = "PUT"
-		url = fmt.Sprintf("/_plugins/_sm/policies/%s?if_seq_no=%d&if_primary_term=%d",
-			policyName, getResponse.SeqNo, getResponse.PrimaryTerm)
-		logger.Info(fmt.Sprintf("Updating existing SM policy %s (seq_no: %d, primary_term: %d)", policyName, getResponse.SeqNo, getResponse.PrimaryTerm))
+		url = fmt.Sprintf("/_plugins/_sm/policies/%s?if_seq_no=%.0f&if_primary_term=%.0f",
+			policyName, seqNo, primaryTerm)
+		logger.Info(fmt.Sprintf("Updating existing SM policy %s (seq_no: %.0f, primary_term: %.0f)", policyName, seqNo, primaryTerm))
 	} else {
 		getRes.Body.Close()
 		method = "POST"

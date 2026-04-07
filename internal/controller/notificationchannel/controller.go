@@ -73,7 +73,11 @@ func (r *NotificationChannelReconciler) Reconcile(ctx context.Context, req ctrl.
 		if controllerutil.ContainsFinalizer(notificationChannelResource, controller.ResourceFinalizer) {
 
 			// 3.1 Delete the resources associated with the NotificationChannel
-			err = r.Sync(ctx, watch.Deleted, notificationChannelResource)
+			if !notificationChannelResource.Spec.Protected {
+				err = r.Sync(ctx, watch.Deleted, notificationChannelResource)
+			} else {
+				logger.Info(fmt.Sprintf("Protected resource %s/%s, skipping deletion of external resources", notificationChannelResource.Namespace, notificationChannelResource.Name))
+			}
 
 			// Remove the finalizers on NotificationChannel CR
 			controllerutil.RemoveFinalizer(notificationChannelResource, controller.ResourceFinalizer)
@@ -122,12 +126,16 @@ func (r *NotificationChannelReconciler) Reconcile(ctx context.Context, req ctrl.
 	// 7. Sync the notification channels
 	err = r.Sync(ctx, watch.Modified, notificationChannelResource)
 	if err != nil {
+		notificationChannelResource.Status.ConsecutiveErrors++
+		backoff := controller.CalculateBackoff(notificationChannelResource.Status.ConsecutiveErrors)
+		result = ctrl.Result{RequeueAfter: backoff}
 		r.UpdateConditionKubernetesApiCallFailure(notificationChannelResource)
 		logger.Info(fmt.Sprintf(controller.SyncTargetError, controller.NotificationChannelResourceType, req.NamespacedName, err.Error()))
 		return result, err
 	}
 
 	// 8. Success, update the status
+	notificationChannelResource.Status.ConsecutiveErrors = 0
 	r.UpdateConditionSuccess(notificationChannelResource)
 
 	return result, err

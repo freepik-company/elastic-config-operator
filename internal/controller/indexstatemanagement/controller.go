@@ -74,7 +74,11 @@ func (r *IndexStateManagementReconciler) Reconcile(ctx context.Context, req ctrl
 		if controllerutil.ContainsFinalizer(indexStateManagementResource, controller.ResourceFinalizer) {
 
 			// 3.1 Delete the resources associated with the IndexStateManagement
-			err = r.Sync(ctx, watch.Deleted, indexStateManagementResource)
+			if !indexStateManagementResource.Spec.Protected {
+				err = r.Sync(ctx, watch.Deleted, indexStateManagementResource)
+			} else {
+				logger.Info(fmt.Sprintf("Protected resource %s/%s, skipping deletion of external resources", indexStateManagementResource.Namespace, indexStateManagementResource.Name))
+			}
 
 			// Remove the finalizers on IndexStateManagement CR
 			controllerutil.RemoveFinalizer(indexStateManagementResource, controller.ResourceFinalizer)
@@ -123,12 +127,16 @@ func (r *IndexStateManagementReconciler) Reconcile(ctx context.Context, req ctrl
 	// 7. Sync the ISM policies
 	err = r.Sync(ctx, watch.Modified, indexStateManagementResource)
 	if err != nil {
+		indexStateManagementResource.Status.ConsecutiveErrors++
+		backoff := controller.CalculateBackoff(indexStateManagementResource.Status.ConsecutiveErrors)
+		result = ctrl.Result{RequeueAfter: backoff}
 		r.UpdateConditionKubernetesApiCallFailure(indexStateManagementResource)
 		logger.Info(fmt.Sprintf(controller.SyncTargetError, controller.IndexStateManagementResourceType, req.NamespacedName, err.Error()))
 		return result, err
 	}
 
 	// 8. Success, update the status
+	indexStateManagementResource.Status.ConsecutiveErrors = 0
 	r.UpdateConditionSuccess(indexStateManagementResource)
 
 	return result, err

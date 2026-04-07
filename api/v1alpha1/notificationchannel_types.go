@@ -35,6 +35,10 @@ type NotificationChannelSpec struct {
 	// Resources contains the notification channels to apply, keyed by channel name
 	// Each key represents a channel name, the value is the channel configuration
 	Resources map[string]apiextensionsv1.JSON `json:"resources"`
+
+	// Protected prevents deletion of external resources when this Kubernetes resource is deleted
+	// +optional
+	Protected bool `json:"protected,omitempty"`
 }
 
 // NotificationChannelStatus defines the observed state of NotificationChannel.
@@ -60,6 +64,10 @@ type NotificationChannelStatus struct {
 	// LastSyncTime records the last time the resource was successfully synchronized with OpenSearch.
 	// +optional
 	LastSyncTime *metav1.Time `json:"lastSyncTime,omitempty"`
+
+	// ConsecutiveErrors tracks the number of consecutive sync failures for exponential backoff
+	// +optional
+	ConsecutiveErrors int32 `json:"consecutiveErrors,omitempty"`
 
 	// conditions represent the current state of the NotificationChannel resource.
 	// +listType=map
