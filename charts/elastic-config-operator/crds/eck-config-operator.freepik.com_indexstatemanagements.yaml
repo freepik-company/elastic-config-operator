@@ -62,6 +62,10 @@ spec:
           spec:
             description: spec defines the desired state of IndexStateManagement
             properties:
+              protected:
+                description: Protected prevents deletion of external resources when
+                  this Kubernetes resource is deleted
+                type: boolean
               resourceSelector:
                 description: ResourceSelector specifies the target OpenSearch cluster
                   for ISM policies
@@ -250,6 +254,11 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              consecutiveErrors:
+                description: ConsecutiveErrors tracks the number of consecutive sync
+                  failures for exponential backoff
+                format: int32
+                type: integer
               lastSyncTime:
                 description: LastSyncTime records the last time the resource was successfully
                   synchronized with OpenSearch.

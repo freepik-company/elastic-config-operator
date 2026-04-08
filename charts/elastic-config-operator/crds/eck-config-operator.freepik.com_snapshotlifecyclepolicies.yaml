@@ -57,6 +57,10 @@ spec:
           spec:
             description: spec defines the desired state of SnapshotLifecyclePolicy
             properties:
+              protected:
+                description: Protected prevents deletion of external resources when
+                  this Kubernetes resource is deleted
+                type: boolean
               resourceSelector:
                 description: ResourceSelector defines how to select and connect to
                   an Elasticsearch cluster
@@ -248,6 +252,11 @@ spec:
                 x-kubernetes-list-map-keys:
                 - type
                 x-kubernetes-list-type: map
+              consecutiveErrors:
+                description: ConsecutiveErrors tracks the number of consecutive sync
+                  failures for exponential backoff
+                format: int32
+                type: integer
               lastSyncTime:
                 description: LastSyncTime is the timestamp of the last successful
                   synchronization with Elasticsearch
